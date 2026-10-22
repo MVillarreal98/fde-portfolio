@@ -1,0 +1,25 @@
+transaction_id,merchant,channel,amount,currency,status,recorded_at
+T001,Convenience Store 01,OXXO,48.50,MXN,captured,2025-03-01 09:12
+T002,Convenience Store 01,OXXO,120.00,MXN,captured,2025-03-01 09:40
+T003,Marketplace Seller B,SPEI,1999.00,MXN,captured,2025-03-01 10:02
+T004,Subscription Renewal,CARD,149.00,MXN,captured,2025-03-01 10:15
+T005,Convenience Store 02,OXXO,60.25,MXN,captured,2025-03-01 11:03
+T006,Convenience Store 02,OXXO,60.25,MXN,captured,2025-03-01 11:07
+T007,Marketplace Seller A,SPEI,3400.00,MXN,captured,2025-03-01 12:30
+T008,Subscription Renewal,CARD,89.00,MXN,captured,2025-03-01 12:44
+T009,Marketplace Seller C,SPEI,780.50,MXN,captured,2025-03-01 13:05
+T010,Convenience Store 01,OXXO,32.00,MXN,captured,2025-03-01 13:22
+T011,Refund - Seller B,SPEI,450.00,MXN,refunded,2025-03-01 14:10
+T012,Convenience Store 03,OXXO,512.75,MXN,captured,2025-03-01 15:00
+T013,Marketplace Seller D,SPEI,1250.00,MXN,captured,2025-03-01 15:33
+T014,Subscription Renewal,CARD,299.00,MXN,captured,2025-03-01 16:12
+T015,Convenience Store 04,OXXO,75.00,MXN,captured,2025-03-01 17:45
+T016,Marketplace Seller A,SPEI,1180.25,MXN,captured,2025-03-02 09:15
+T017,Convenience Store 02,OXXO,140.40,MXN,captured,2025-03-02 10:02
+T018,Subscription Renewal,CARD,199.00,MXN,captured,2025-03-02 10:41
+T019,Marketplace Seller C,SPEI,690.00,MXN,captured,2025-03-02 11:20
+T020,Convenience Store 05,OXXO,203.10,MXN,captured,2025-03-02 12:49
+T021,Marketplace Seller B,SPEI,4800.00,MXN,captured,2025-03-02 14:05
+T022,Convenience Store 01,OXXO,77.77,MXN,captured,2025-03-02 15:26
+T023,Subscription Renewal,CARD,74.99,MXN,captured,2025-03-02 16:58
+T024,Convenience Store 03,OXXO,990.00,MXN,captured,2025-03-02 18:20

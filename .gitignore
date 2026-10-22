@@ -1,0 +1,31 @@
+# OneDrive / OS
+Desktop.ini
+~$*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+
+# Node
+node_modules/
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# Data / outputs
+*.sqlite
+*.db
+output/
+
+# Editor
+.vscode/
+.idea/

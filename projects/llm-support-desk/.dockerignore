@@ -1,0 +1,11 @@
+# Same protection as .gitignore for the Docker build context.
+.venv/
+.git/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.egg-info/
+src/support_desk.egg-info/
+docs/screenshots/
+*.pyc

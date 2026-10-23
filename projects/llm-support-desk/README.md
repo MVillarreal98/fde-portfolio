@@ -69,6 +69,30 @@ The deterministic fallback in action (invalid/absent model output never reaches
 the operator — the schema rejects it and rules escalate):
 ![Triage result in the operator UI](docs/screenshots/triage-result.png)
 
+## Run it with Docker (CI/CD-ready)
+
+Full deployment — model server, one-shot model pull and the triage API — in one
+command:
+
+```bash
+docker compose up --build
+open http://localhost:8000
+```
+
+The deployment itself is CI-verified (`.github/workflows/docker.yml`):
+
+1. **`container-test`** — unit tests run *inside* the same multi-stage image
+   that ships (`Dockerfile`, stage `test`), so there is no environment drift
+   between what CI validates and what gets deployed.
+2. **`publish`** — on `main`, the runtime image is published to GHCR
+   (`ghcr.io/mvillarreal98/support-desk`), so deploying is a `docker pull`, not
+   a rebuild. The container runs as a non-root user and carries its own
+   `HEALTHCHECK` on `/api/health` (which stays green even in degraded mode, by
+   design of the fallback).
+
+Every knob stays env-overridable in the container (`OLLAMA_HOST`,
+`OLLAMA_MODEL`, `SUPPORT_DESK_*`), matching `config.py`'s ops-first design.
+
 ## Layout
 
 | Path | Purpose |
@@ -80,3 +104,5 @@ the operator — the schema rejects it and rules escalate):
 | `src/support_desk/service.py` | Triage orchestration + deterministic fallback |
 | `src/support_desk/server.py` | Stdlib HTTP server + embedded UI (zero extra deps) |
 | `data/sample_tickets.csv` | Demo claims modeled after real retail payment complaints |
+| `Dockerfile` | Multi-stage: `test` stage runs the unit tests, `runtime` ships the app (non-root, with healthcheck) |
+| `docker-compose.yml` | One-command full deployment: Ollama + one-shot model pull + triage API |

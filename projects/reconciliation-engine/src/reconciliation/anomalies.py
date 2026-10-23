@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .config import Config, OPS_ORPHAN_STATUS_EXCLUDE
+from .config import OPS_ORPHAN_STATUS_EXCLUDE, Config
 
 
 def rule_duplicate_settlements(matched: pd.DataFrame, cfg: Config) -> pd.DataFrame:

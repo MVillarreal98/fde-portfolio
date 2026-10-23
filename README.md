@@ -8,6 +8,7 @@
 > Built for Forward Deployed Engineer roles: every project below starts from a real operational pain I lived (auditing +240 invoices/day, building reporting pipelines for logistics), then shows the tool I built to fix it and the hours or dollars it saved.
 
 📄 Plain-text executive summary for email/ATS attachments: [docs/executive-summary.txt](docs/executive-summary.txt)
+🎙️ Interview-ready 40-second pitch per project (expected hard questions included): [PITCH.md](PITCH.md)
 
 ---
 

@@ -45,20 +45,28 @@ Browser ──POST /api/triage──► Python HTTP server
 
 ## Run it
 
-With Ollama installed and any chat model pulled (`ollama pull llama3.2`):
+With Ollama installed and a chat model pulled (`ollama pull llama3.2:1b`):
 
 ```bash
-pip install -r requirements.txt        # stdlib-only, but listed for reproducibility
-python run_support_desk.py             # opens http://localhost:8000
+pip install -e .                        # installs console script + dev extras
+support-desk --port 8024 --model llama3.2:1b      # or simply: python run_support_desk.py
 tests:  .venv\Scripts\python.exe -m pytest tests -q
 ```
 
 No Ollama? The app still runs end-to-end using the deterministic fallback —
 useful for demos in environments without local inference.
 
-**Screenshot** — a real triage decision rendered in the operator UI (fallback
-decision, escalated to human, refund flagged by the rules layer):
+**Live inference** — a real triage decision rendered in the operator UI with the
+local model connected (`source: llm`, first-line ready, confidence 0.7). The GIF
+alternates it with the degraded mode (`source: fallback`,`escalated: true`), so
+auditors can see both sources of truth the service emits:
 
+![Triage with local LLM connected](docs/screenshots/triage-result-llm.png)
+
+![Triage demo GIF: LLM vs fallback](docs/screenshots/triage-demo.gif)
+
+The deterministic fallback in action (invalid/absent model output never reaches
+the operator — the schema rejects it and rules escalate):
 ![Triage result in the operator UI](docs/screenshots/triage-result.png)
 
 ## Layout

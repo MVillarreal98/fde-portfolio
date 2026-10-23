@@ -33,6 +33,9 @@ Rules you must respect:
 - If the claim is about the app/balance display and no money is at risk: "app_issue" (refund_request false).
 - If the registered amount differs from what the customer says they paid: "amount_discrepancy".
 - When in doubt between categories, choose the one with money at risk flagged honestly in "amount_at_risk" and lower your "confidence".
+
+Example of the ONLY format you may return (keys exactly as shown):
+{{"category": "payment_not_received", "severity": "medium", "refund_request": true, "amount_at_risk": 1200.00, "summary": "Money left the customer but the seller never received it.", "suggested_resolution": "Check settlement status; open trace with the processor.", "confidence": 0.80}}
 """
 
 

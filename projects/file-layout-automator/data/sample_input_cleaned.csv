@@ -1,0 +1,9 @@
+record_type,currency,amount,reference,store_id,notes
+PKG,MXN,48.50,1203914,101,"regular deposit"
+PKG,MXN,120.00,1203915,102,
+PSKG,MXN,60.25,1203916,103,"bad record type but non-required column"
+PKG,MXN,602.50,1203917,104,"amount corrected to 2 decimals"
+PKG,MXN,48.50,1203918,101,"amount provided"
+PKG,MXN,12.34,1203919,102,"amount corrected"
+PKG,MXN,77.77,1203920,102,"reference provided"
+PKG,MXN,990.00,1203971,1001,"store id within 4 digits"

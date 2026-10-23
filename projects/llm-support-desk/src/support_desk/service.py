@@ -6,8 +6,8 @@ from __future__ import annotations
 from .config import Config
 from .llm_client import LLMUnavailable
 from .prompts import build_messages
+from .rules import fallback_classify, post_validate
 from .schema import parse
-from .rules import post_validate, fallback_classify
 
 
 class TriageService:

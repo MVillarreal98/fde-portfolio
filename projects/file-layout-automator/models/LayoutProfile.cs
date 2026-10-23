@@ -9,8 +9,8 @@ namespace DocumentLayoutAutomator.Models;
 /// </summary>
 public sealed class ColumnMapping
 {
-    public string TargetField { get; init; }
-    public string SourceColumn { get; init; }
+    public required string TargetField { get; init; }
+    public required string SourceColumn { get; init; }
     public bool Required { get; init; } = true;
     public int? FixedWidth { get; init; }
     public string PadDirection { get; init; } = "right";   // right | left
@@ -28,7 +28,7 @@ public sealed class ColumnMapping
 
 public sealed class LayoutProfile
 {
-    public string Name { get; init; }
+    public required string Name { get; init; }
     public string Description { get; init; } = "";
-    public IReadOnlyList<ColumnMapping> Columns { get; init; }
+    public required IReadOnlyList<ColumnMapping> Columns { get; init; }
 }

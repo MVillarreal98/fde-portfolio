@@ -46,8 +46,9 @@ data/billing_statements.csv┘                                          (rules l
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate      # Windows
-pip install -r requirements.txt
-python run_reconciliation.py
+pip install -e .                                    # installs the `reconcile` console script
+reconcile --ops data/ops_transactions.csv --billing data/billing_statements.csv
+# (or: python run_reconciliation.py)
 ```
 
 Output:
@@ -62,6 +63,13 @@ output/anomalies_orphans.csv
 A full run on the bundled demo data is committed under [`sample_output/`](sample_output/reconciliation_report.md)
 (4 rules fired, 8 flagged rows, net difference $2,363.00) so reviewers can read the
 real artifact without running anything.
+
+**Executive report** — the finance-facing summary rendered from the committed run:
+
+![Executive reconciliation report](docs/reconciliation-report.png)
+
+Column semantics and the planted anomalies for the demo/tests are documented in
+[`data/Dictionary.md`](data/Dictionary.md).
 
 ## Real-world basis
 

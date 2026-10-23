@@ -11,7 +11,7 @@ namespace DocumentLayoutAutomator;
 
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    public MainWindow(string? initialSource = null)
     {
         InitializeComponent();
         ProfileBox.ItemsSource = new List<LayoutProfile>
@@ -20,6 +20,14 @@ public partial class MainWindow : Window
             LayoutProfiles.CarrierASN,
         };
         ProfileBox.SelectedIndex = 0;
+
+        // Optional headless-ish start (demo/CI): pre-load a source and transform.
+        if (!string.IsNullOrWhiteSpace(initialSource) && File.Exists(initialSource))
+        {
+            SourcePath.Text = initialSource;
+            PreviewSource();
+            TransformSource();
+        }
     }
 
     private LayoutProfile? SelectedProfile => ProfileBox.SelectedItem as LayoutProfile;
@@ -61,6 +69,11 @@ public partial class MainWindow : Window
     }
 
     private void TransformBtn_Click(object sender, RoutedEventArgs e)
+    {
+        TransformSource();
+    }
+
+    private void TransformSource()
     {
         var profile = SelectedProfile;
         if (profile is null) return;

@@ -11,8 +11,14 @@ from typing import Any
 from .config import TRIAGE_CATEGORIES
 
 REQUIRED = ["category", "severity", "summary", "suggested_resolution", "confidence"]
-TYPES = {"category": str, "severity": str, "summary": str,
-         "suggested_resolution": str, "confidence": (int, float)}
+# Type expectations per field; tuples mark accepted alternatives.
+TYPES: dict[str, type | tuple[type, type]] = {
+    "category": str,
+    "severity": str,
+    "summary": str,
+    "suggested_resolution": str,
+    "confidence": (int, float),
+}
 VALID_SEVERITY = {"low", "medium", "high"}
 
 

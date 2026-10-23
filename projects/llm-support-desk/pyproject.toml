@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "support-desk"
+version = "1.0.0"
+description = "Local-LLM claim triage agent with a deterministic business-rules layer"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+support-desk = "support_desk.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "I"]
+
+# Prose and embedded UI markup legitimately exceed 100 cols:
+# - prompts.py: the system prompt template reads as policy prose
+# - server.py: embedded HTML/CSS/JS for the zero-dependency operator UI
+[tool.ruff.lint.per-file-ignores]
+"src/support_desk/prompts.py" = ["E501"]
+"src/support_desk/server.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src/support_desk"]
+branch = true

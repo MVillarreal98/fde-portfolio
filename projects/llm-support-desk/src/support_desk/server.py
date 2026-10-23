@@ -8,12 +8,10 @@ its rules-audits and the decision source (llm/fallback) in one screen.
 from __future__ import annotations
 
 import json
-
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 from .service import TriageService
-from .llm_client import OllamaClient
 
 PAGE = """<!doctype html>
 <html lang="es">

@@ -34,7 +34,7 @@ while watching the process, scoped a minimum viable tool, and delivered a
 ## Layout
 
 ```
-FileLayoutAutomator/
+FileLayoutAutomator/                 solution: DocumentLayoutAutomator.sln
 ├── App.xaml / App.xaml.cs / MainWindow.xaml(.cs)  WPF single-screen UI
 ├── models/LayoutProfile.cs        profiles + ColumnMapping definitions
 ├── services/LayoutTransformer.cs  deterministic mapping + validation engine
@@ -43,12 +43,26 @@ FileLayoutAutomator/
 └── tests/LayoutTransformerTests   xunit: padding, defaults, bad rows, amounts
 ```
 
+## Screenshots
+
+The **fail-closed** run: 3 rows accepted, 5 rejected with line numbers and
+plain-language reasons, and **no output artifact written** until everything is
+fixed (`--source` also works as a CLI/demo start mode):
+
+![Validation errors state](docs/screenshots/app-validation-errors.png)
+
+The **success** run on the corrected file ([`data/sample_input_cleaned.csv`](data/sample_input_cleaned.csv)):
+8/8 rows accepted, artifact generated, green status bar:
+
+![Success state](docs/screenshots/app-success.png)
+
 ## Run / build
 
 ```powershell
-dotnet build                       # .NET 8 SDK
+dotnet build DocumentLayoutAutomator.sln     # .NET 8 SDK, zero warnings
 dotnet run --project FileLayoutAutomator.csproj
-dotnet test tests                  # xunit over the deterministic engine
+dotnet run --project FileLayoutAutomator.csproj -- --source data\sample_input.csv   # auto-loaded demo
+dotnet test tests                            # xunit over the deterministic engine (+ Coverlet)
 ```
 
 A pre-built transformation result on the bundled demo file is committed under

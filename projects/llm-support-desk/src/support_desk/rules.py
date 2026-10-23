@@ -6,7 +6,7 @@ executed without passing these invariants, regardless of LLM confidence.
 
 from __future__ import annotations
 
-from .config import Config, TRIAGE_CATEGORIES
+from .config import TRIAGE_CATEGORIES, Config
 
 # Company policy: first-line agents may decide refunds up to this cap.
 # Above it, the claim is escalated to a human supervisor.
@@ -51,9 +51,18 @@ def post_validate(decision: dict, ticket_amount: float, cfg: Config) -> dict:
 # -------------------------------------------------------------------------- #
 
 FALLBACK_KEYWORDS = [
-    ("duplicate_charge", ("duplicado", "cobro doble", "charged twice", "dos veces", "twice", "two times", "merged")),
-    ("unauthorized_charge", ("fraude", "unauthorized", "no autorizado", "did not make", "no la hice")),
-    ("payment_not_received", ("never received", "nunca recib", "no llegó", "no recibio", "seller says")),
+    (
+        "duplicate_charge",
+        ("duplicado", "cobro doble", "charged twice", "dos veces", "twice", "two times", "merged"),
+    ),
+    (
+        "unauthorized_charge",
+        ("fraude", "unauthorized", "no autorizado", "did not make", "no la hice"),
+    ),
+    (
+        "payment_not_received",
+        ("never received", "nunca recib", "no llegó", "no recibio", "seller says"),
+    ),
     ("app_issue", ("app", "balance", "saldo", "spinner", "carga")),
 ]
 
@@ -71,7 +80,12 @@ def fallback_classify(ticket_text: str, amount: float) -> dict:
         severity = "high"
     elif amount <= 0 or "app_issue" == category:
         severity = "low"
-    refund = amount > 0 and category in ("duplicate_charge", "unauthorized_charge", "amount_discrepancy")
+    refund_eligible_categories = (
+        "duplicate_charge",
+        "unauthorized_charge",
+        "amount_discrepancy",
+    )
+    refund = amount > 0 and category in refund_eligible_categories
     return {
         "category": category,
         "severity": severity,

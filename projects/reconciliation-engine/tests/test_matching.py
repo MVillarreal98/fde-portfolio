@@ -8,13 +8,13 @@ import pandas as pd
 import pytest
 
 from reconciliation import Config
-from reconciliation.cleaning import clean_ops
-from reconciliation.matching import aggregate_billing, match_sources
 from reconciliation.anomalies import (
     rule_amount_mismatch,
     rule_duplicate_settlements,
     rule_orphans,
 )
+from reconciliation.cleaning import clean_ops
+from reconciliation.matching import aggregate_billing, match_sources
 
 
 def build():

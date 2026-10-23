@@ -1,0 +1,12 @@
+# Normalize line endings across the repo (Windows + CI friendly).
+* text=auto eol=lf
+
+# Binary artifacts
+*.png  binary
+*.gif  binary
+*.pdf  binary
+*.exe  binary
+*.dll  binary
+
+# Keep Windows shell artifacts written with CRLF where they must run there.
+*.ps1  text eol=crlf

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .config import Config, BILLING_COLUMNS, OPS_COLUMNS
+from .config import BILLING_COLUMNS, OPS_COLUMNS, Config
 
 
 def _validate(path: pd, columns: list[str], source: str) -> None:

@@ -6,7 +6,7 @@ without local inference.
 """
 
 from support_desk import Config, TriageService
-from support_desk.rules import post_validate, fallback_classify
+from support_desk.rules import post_validate
 
 CFG = Config()
 
@@ -24,6 +24,7 @@ VALID_LLM_ANSWER = (
     ' "amount_at_risk": 349.0, "summary": "Customer denies the charge.",'
     ' "suggested_resolution": "Block card and refund.", "confidence": 0.9}'
 )
+
 
 
 def test_fallback_when_llm_down():
@@ -48,7 +49,7 @@ class Faulted:
         try:
             return self._inner.chat(messages)
         except Exception as exc:
-            raise LLMUnavailable(str(exc))
+            raise LLMUnavailable(str(exc)) from exc
 
 
 def test_rules_enforce_unauthorized_override_and_refund_cap():

@@ -1,0 +1,41 @@
+# Full local deployment: model server + one-shot model pull + triage API.
+# `docker compose up` gives a working desk at http://localhost:8000;
+# without the Ollama services the app still runs on its deterministic fallback.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama   # model weights survive restarts
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  model-init:
+    image: ollama/ollama:latest
+    entrypoint: sh -c "until ollama list >/dev/null 2>&1; do sleep 2; done; ollama pull \"$${MODEL}\" && echo 'model ready'"
+    environment:
+      MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+      OLLAMA_HOST: http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  support-desk:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      model-init:
+        condition: service_completed_successfully
+
+volumes:
+  ollama:

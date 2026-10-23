@@ -1,0 +1,46 @@
+name: portfolio-ci
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  reconciliation-engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/reconciliation-engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest tests -q
+
+  llm-support-desk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/llm-support-desk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - run: python -m pytest tests -q
+
+  file-layout-automator:
+    runs-on: windows-latest   # WPF targets net8.0-windows
+    defaults:
+      run:
+        working-directory: projects/file-layout-automator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet test tests --nologo

@@ -1,8 +1,13 @@
 # Forward Deployed Engineer Portfolio
 
+[![portfolio-ci](https://github.com/YOUR-USER/YOUR-REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USER/YOUR-REPO/actions/workflows/ci.yml)
+<!-- Substitute YOUR-USER/YOUR-REPO after publishing to GitHub -->
+
 **Business problem → custom tool → measurable impact.** Three real projects, each built around the way fintech operations actually work at scale (high-volume retail payment rails like OXXO, SPEI, and card settlements).
 
 > Built for Forward Deployed Engineer roles: every project below starts from a real operational pain I lived (auditing +240 invoices/day, building reporting pipelines for logistics), then shows the tool I built to fix it and the hours or dollars it saved.
+
+📄 Plain-text executive summary for email/ATS attachments: [docs/executive-summary.txt](docs/executive-summary.txt)
 
 ---
 

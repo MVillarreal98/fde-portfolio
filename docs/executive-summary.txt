@@ -1,0 +1,83 @@
+EXECUTIVE SUMMARY — FORWARD DEPLOYED ENGINEER PORTFOLIO
+========================================================
+Candidate focus: Forward Deployed Engineer (payments / fintech, Spin - OXXO)
+
+THESIS
+------
+A Forward Deployed Engineer succeeds by turning an operational pain point
+into a working tool with a measurable payoff. Every project in this
+portfolio follows one arc:
+
+    Here was the daily problem -> Here is the tool I built -> Here is what it saved.
+
+RESULTS
+-------
+1) RECONCILIATION ENGINE (Python, Pandas, unit tests)
+   Problem: daily reconciliation between operational records and
+   billing/settlement data was manual (+240 invoices/day audited) and
+   missed systemic anomalies.
+   Delivered: modular pipeline - ingestion with schema validation, cent-level
+   cleaning, cross-matching by transaction reference, four deterministic
+   anomaly rules (duplicate settlements, amount mismatches, orphaned
+   transactions, duplicate same-day charges), executive Markdown report +
+   per-rule CSV exports.
+   Impact: replaced hours of manual cross-checking with a repeatable
+   5-minute run; anomalies surface daily instead of at month-end. Sample
+   run on shipped demo data: 24 transactions reconciled, 4 rules fired,
+   net flagged difference $2,363.00 MXN.
+
+2) LLM SUPPORT-CLAIM TRIAGE AGENT (Python, Ollama REST, web UI, on-premise)
+   Problem: support teams triage high volumes of unstructured claims with
+   inconsistent classifications and no audit trail.
+   Delivered: web application integrating a local LLM - code-owned system
+   prompt with typed context injection, protocol-level JSON output contract
+   with fail-closed schema validation, deterministic rules layer above the
+   model (refund autocap, low-confidence escalation, unauthorized-charge
+   severity override), and an auditable keyword fallback classifier that
+   keeps the desk running when inference is down.
+   Impact: production-shaped agent flow (classify claim, summarize history,
+   propose resolution) that runs fully on-premise so payment data never
+   leaves the network; every decision shows its source (llm/fallback) for
+   auditability.
+
+3) DOCUMENT LAYOUT AUTOMATOR (C# / .NET 8 / WPF, Windows desktop MVP)
+   Problem: operators re-formatted files by hand for downstream ERP and
+   carrier systems - repetitive, zero-tolerance, error-prone.
+   Delivered: single-screen desktop app with a declarative layout engine
+   (fixed widths, zero/left/right padding, regex validation, defaults),
+   header-aware CSV reader, per-row diagnostics with line numbers and
+   plain-language reasons, and a fail-closed rule: no output file is
+   generated while any row is rejected.
+   Impact: hand-edited layouts disappeared from the daily routine;
+   operators complete in minutes what required careful manual sessions,
+   with same-input/same-output determinism guaranteed by 5 unit tests.
+
+ENGINEERING PRACTICE (VERIFIED)
+-------------------------------
+- 12 tests green across the three suites (3 + 4 + 5), run locally and by CI
+- End-to-end verified: CLI demo run, HTTP server + operator UI, compiled
+  engine artifacts committed under sample_output/
+- Git feature-branch workflow: one branch per project, merged to main
+- CI available: GitHub Actions runs all three suites on every push
+
+ARCHITECTURE SKILLS DEMONSTRATED
+--------------------------------
+- Data: pandas pipelines, aggregation-based matching, anomaly heuristics,
+  executive reporting, fail-fast ingestion validation
+- AI engineering: local LLM integration, prompt/context architecture,
+  structured JSON contracts, deterministic rules above probabilistic output
+- Product delivery: requirements discovery -> MVP scope -> GUI delivery to
+  non-technical operators
+- Quality: pure, testable rule functions; fail-closed contracts; honest
+  degradation paths; reproducible demo artifacts
+
+HOW TO REVIEW THE REPOSITORY
+----------------------------
+README.md                    landing page with the three projects listed
+projects/reconciliation-engine/   run: python run_reconciliation.py
+projects/llm-support-desk/        run: python run_support_desk.py
+projects/file-layout-automator/   run: dotnet test tests; dotnet run
+
+(Generated from docs/executive-summary.md - plain-text version for
+email/ATS attachments. Update the X-hours / $ savings figures with validated
+numbers before submitting.)

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: #1c2733; font-size: 9.5pt; line-height: 1.35; }
+  .page { width: 210mm; min-height: 296mm; padding: 12mm 14mm; display: flex; flex-direction: column; }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #118d57; padding-bottom: 6px; }
+  .header h1 { font-size: 17pt; letter-spacing: 0.2px; }
+  .header h1 span { color: #118d57; }
+  .header .meta { text-align: right; font-size: 8.5pt; color: #5b6b7b; }
+  .thesis { background: #f0f7f3; border-left: 4px solid #118d57; padding: 7px 12px; margin: 10px 0 12px; font-size: 9.5pt; }
+  .thesis b { color: #0c6b3d; }
+  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: 0.8px; color: #0c6b3d; margin: 0 0 5px; }
+  table.results { width: 100%; border-collapse: collapse; font-size: 8.7pt; }
+  table.results th { background: #0f1c2e; color: #fff; text-align: left; padding: 4px 7px; font-size: 8.2pt; }
+  table.results td { border-bottom: 1px solid #dde4ee; padding: 5px 7px; vertical-align: top; }
+  table.results td.proj { font-weight: 600; width: 132px; }
+  table.results td.proj small { font-weight: 400; color: #5b6b7b; display: block; font-size: 7.6pt; }
+  .impact { font-weight: 600; color: #0c6b3d; }
+  .srow { display: flex; gap: 12px; margin-top: 12px; align-items: stretch; }
+  .shot { width: 112mm; border: 1px solid #dde4ee; border-radius: 6px; }
+  .shot img { width: 100%; display: block; border-radius: 6px; }
+  .legend { flex: 1; background: #0f1c2e; color: #dbe6f2; padding: 10px 12px; border-radius: 6px; font-size: 8.6pt; }
+  .legend h3 { font-size: 9pt; color: #7ee2ae; margin-bottom: 4px; }
+  .legend p { margin-bottom: 6px; }
+  .skills { display: flex; gap: 8px; margin-top: 12px; }
+  .skill { flex: 1; border: 1px solid #dde4ee; border-radius: 6px; padding: 7px 9px; font-size: 8.3pt; }
+  .skill b { display: block; color: #0c6b3d; margin-bottom: 2px; font-size: 8.6pt; }
+  .footer { margin-top: auto; padding-top: 8px; border-top: 2px solid #dde4ee; display: flex; justify-content: space-between; font-size: 8pt; color: #5b6b7b; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>Forward Deployed Engineer — <span>Portfolio</span></h1>
+    <div class="meta">Spin (OXXO / fintech) · payments operations focus<br>
+    Python · Pandas · SQL · LLM (Ollama) · C#/.NET · Git<br>
+    github.com/your-user/spin-fde-portfolio</div>
+  </div>
+
+  <div class="thesis">
+    <b>Thesis:</b> a Forward Deployed Engineer succeeds by turning an operational pain into a working
+    tool with a measurable payoff. Every project below follows the same arc:
+    <b>here was the daily problem → here is the tool I built → here is what it saved.</b>
+  </div>
+
+  <h2>Results</h2>
+  <table class="results">
+    <tr><th style="width:132px">Project</th><th>Business problem</th><th>Solution delivered</th><th style="width:62mm">Impact</th></tr>
+    <tr>
+      <td class="proj">Reconciliation Engine<small>Python · Pandas · tests</small></td>
+      <td>Daily reconciliation of operational records vs. billing/settlement (+240 invoices/day audited) was manual and missed systemic anomalies.</td>
+      <td>Modular pipeline: ingestion, cleaning, cross-matching by ID/amount, 4 deterministic anomaly rules, automated executive report.</td>
+      <td class="impact">Hours of manual cross-checking → 5-minute run; duplicate charges, mismatches and revenue leaks surface daily.</td>
+    </tr>
+    <tr>
+      <td class="proj">LLM Support Desk<small>Python · Ollama REST · UI</small></td>
+      <td>Support triage of unstructured payment claims lacked consistency, rules and audit trails.</td>
+      <td>Agent flow: local LLM, code-owned prompt, JSON output contract validated fail-closed, deterministic business-rules layer, keyword fallback.</td>
+      <td class="impact">Runnable fully on-premise — no transaction data leaves the network; never executes an unvalidated model decision.</td>
+    </tr>
+    <tr>
+      <td class="proj">Document Layout Automator<small>C# · .NET 8 · WPF</small></td>
+      <td>Staff manually re-laid-out files for downstream systems — repetitive and error-prone, zero tolerance.</td>
+      <td>Desktop MVP: declarative layout profiles (widths, padding, regex), per-line diagnostics, fail-closed generation, 5 xunit tests.</td>
+      <td class="impact">Discovery → MVP → delivery arc; operators fix the exact defect without training; partners never saw a bad layout again.</td>
+    </tr>
+  </table>
+
+  <div class="srow">
+    <div class="shot">
+      <img src="assets/triage-result.png" alt="Triage agent UI">
+    </div>
+    <div class="legend">
+      <h3>Verified work, not slideware</h3>
+      <p><b>12 automated tests</b> protect the three suites and run on every push via GitHub Actions CI (three jobs, one per stack).</p>
+      <p><b>Demo data with planted anomalies</b> is reconciled in the committed sample outputs — reviewers reproduce the exact numbers.</p>
+      <p><b>Screenshot:</b> the support-desk UI classifying a duplicated top-up claim under the deterministic rules layer (fallback mode shown: keeps operating when the LLM is down).</p>
+    </div>
+  </div>
+
+  <h2 style="margin-top:12px">Skills</h2>
+  <div class="skills">
+    <div class="skill"><b>Data &amp; reconciliation</b> pandas pipelines · matching strategy · anomaly heuristics · executive reporting · SQL</div>
+    <div class="skill"><b>AI engineering</b> on-prem LLM integration · prompt &amp; context architecture · JSON contracts · rules over probabilities</div>
+    <div class="skill"><b>Delivery end to end</b> discovery with users · MVP scoping · desktop/GUI delivery · Git feature-branch workflow · CI</div>
+  </div>
+
+  <div class="footer">
+    <span>Portfolio repository — every project: README (problem → tool → impact), planted demo data, committed sample outputs, unit tests.</span>
+    <span>Page 1/1</span>
+  </div>
+
+</div>
+</body>
+</html>

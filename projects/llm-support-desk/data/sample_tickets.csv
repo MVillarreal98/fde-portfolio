@@ -1,0 +1,6 @@
+ticket_id,channel,customer_text,amount,history
+TK-1001,OXXO,"I paid my phone top-up with $50 twice because the store terminal merged them and I only got one code. I have both blue receipts.",50.00,"3 top-ups last 30 days, avg $45, no prior claims"
+TK-1002,SPEI,"I sent $1,200 for a marketplace purchase but the seller says they never received it. Bank shows the deposit as completed.",1200.00,"8 transactions last 60 days, first claim in 2 years"
+TK-1003,CARD,"A charge of $349 appeared in my account from Monday but I did not make it. Card is still with me.",349.00,"12 transactions last 30 days, avg $85"
+TK-1004,APP,"The app does not load my balance since yesterday, it shows spinner and never updates.",0.00,"45 app sessions last 30 days, power user"
+TK-1005,OXXO,"I paid $310 for a utility bill but the system registered $130 and the store refuses to refund the difference.",180.00,"2 bill payments last 30 days, no prior claims"

@@ -1,0 +1,5 @@
+# The application is stdlib-only (urllib, http.server).
+# Listed here so reviewers can pin a minimal environment identical to the demo.
+#
+# Optional tonight-triaging improvements that require packages:
+# pandas>=2.0        # batch triage of ticket queues

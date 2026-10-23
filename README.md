@@ -1,7 +1,7 @@
 # Forward Deployed Engineer Portfolio
 
-[![portfolio-ci](https://github.com/YOUR-USER/YOUR-REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-USER/YOUR-REPO/actions/workflows/ci.yml)
-<!-- Substitute YOUR-USER/YOUR-REPO after publishing to GitHub -->
+[![portfolio-ci](https://github.com/MVillarreal98/fde-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/MVillarreal98/fde-portfolio/actions/workflows/ci.yml)
+<!-- Badge points at this repo's CI (three suites: pytest ×2, dotnet). -->
 
 **Business problem → custom tool → measurable impact.** Three real projects, each built around the way fintech operations actually work at scale (high-volume retail payment rails like OXXO, SPEI, and card settlements).
 

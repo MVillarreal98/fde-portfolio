@@ -1,0 +1,5 @@
+transaction_ref,merchant,channel,ops_amount,settlement_total,amount_difference
+T007,Marketplace Seller A,SPEI,3400.0,6800.0,3400.0
+T018,Subscription Renewal,CARD,199.0,180.0,-19.0
+T012,Convenience Store 03,OXXO,512.75,502.75,-10.0
+T009,Marketplace Seller C,SPEI,780.5,772.5,-8.0

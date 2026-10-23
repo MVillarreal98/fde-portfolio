@@ -12,16 +12,24 @@ import pandas as pd
 
 
 def aggregate_billing(billing: pd.DataFrame) -> pd.DataFrame:
-    """Sum settlements per transaction reference and count entries."""
-    agg = (
-        billing.groupby("transaction_ref", as_index=False)
-        .agg(
-            settlement_total=("settlement_amount", "sum"),
-            settlement_count=("settlement_amount", "size"),
-            settled_dates=("settled_at", lambda s: ", ".join(sorted(s.astype(str)))),
-            statement_ids=("statement_id", lambda s: ", ".join(map(str, s))),
+    """Sum settlements per transaction reference and count entries.
+
+    Contextual columns (settled dates, statement ids) are aggregated when
+    present, so tests and callers can pass minimal frames.
+    """
+    agg_spec: dict = {
+        "settlement_total": ("settlement_amount", "sum"),
+        "settlement_count": ("settlement_amount", "size"),
+    }
+    if "settled_at" in billing.columns:
+        agg_spec["settled_dates"] = (
+            "settled_at", lambda s: ", ".join(sorted(s.astype(str)))
         )
-    )
+    if "statement_id" in billing.columns:
+        agg_spec["statement_ids"] = (
+            "statement_id", lambda s: ", ".join(map(str, s))
+        )
+    agg = billing.groupby("transaction_ref", as_index=False).agg(**agg_spec)
     return agg
 
 

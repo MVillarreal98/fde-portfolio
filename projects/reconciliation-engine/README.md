@@ -59,6 +59,10 @@ output/anomalies_duplicates.csv
 output/anomalies_orphans.csv
 ```
 
+A full run on the bundled demo data is committed under [`sample_output/`](sample_output/reconciliation_report.md)
+(4 rules fired, 8 flagged rows, net difference $2,363.00) so reviewers can read the
+real artifact without running anything.
+
 ## Real-world basis
 
 Implemented against the daily reality of auditing **+240 invoices per day** at a

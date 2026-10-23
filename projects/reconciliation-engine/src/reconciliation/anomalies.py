@@ -29,7 +29,9 @@ def rule_amount_mismatch(matched: pd.DataFrame, cfg: Config) -> pd.DataFrame:
     Only transactions that appeared on both sides can mismatch; the difference
     direction goes in a dedicated column so finance can sort by loss value.
     """
-    both = matched[matched["settlement_count"] > 0].copy()
+    # Only transactions present on BOTH sides can truly "mismatch";
+    # one-sided records belong to the orphans rule, not here.
+    both = matched[(matched["settlement_count"] > 0) & (matched["ops_amount"] > 0)].copy()
     both["amount_difference"] = (both["settlement_total"] - both["ops_amount"]).round(2)
     bad = both[both["amount_difference"].abs() > cfg.amount_tolerance]
     if bad.empty:

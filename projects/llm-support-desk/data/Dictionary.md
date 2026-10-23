@@ -16,7 +16,7 @@ business rules). It contains no personal data.
 | Ticket | Expected category | Severity | Refund? | Notes |
 |---|---|---|---|---|
 | TK-1001 | `duplicate_charge` | medium | yes | Verified twice paid by the terminal. |
-| TK-1002 | `payment_not_received` | medium | yes | >$1,000: rules escalate the refund to supervisor. |
+| TK-1002 | `payment_not_received` | medium | yes | Above the $500 first-line refund cap: rules escalate the refund to supervisor. |
 | TK-1003 | `unauthorized_charge` | high | yes | Rules force high severity; >cap → supervisor. |
 | TK-1004 | `app_issue` | low | no | Zero amount: no first-line refund. |
 | TK-1005 | `amount_discrepancy` | medium | yes | $180 difference vs $130 recorded. |

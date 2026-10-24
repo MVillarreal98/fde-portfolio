@@ -1,0 +1,4 @@
+code,reference,detail
+orphan_payment,PAY-010,unknown_invoice_id=INV-999
+overpayment,INV-006,unapplied_cash_cents=75000
+overpayment,INV-010,unapplied_cash_cents=4000

@@ -18,10 +18,10 @@ crossing three public data sources.
 > and was written for the demos, except [`iphone-vs-samsung`](projects/iphone-vs-samsung/),
 > which is built on public data (Google Trends, the 2020 Census from INEGI,
 > StatCounter) downloaded on the dates named in its README. No project has users
-> or
-> a production deployment, and nothing here measures business impact. The
-> numbers below are test counts and measurements on synthetic data; each project
-> README gives the command, machine and versions behind them.
+> or a production deployment, and nothing here measures business impact. The
+> numbers below are test counts and measurements on synthetic data, except the
+> iPhone vs Galaxy shares, which are read from those public sources; each
+> project README gives the command, machine and versions behind them.
 
 ## Projects
 
@@ -31,9 +31,7 @@ crossing three public data sources.
 | **[LLM Support Desk](projects/llm-support-desk/)** | Python (stdlib) · Ollama `llama3.2:1b` · SQLite · Docker | Triages payment claims. A local LLM proposes a category and severity; deterministic rules decide the action and can only escalate. Every decision is stored in SQLite with the prompt hash, the model and the rules that fired. | 133 pytest tests with 99% line and branch coverage, including prompt-injection tests against a fake model that obeys the injection. Offline eval on 23 labeled synthetic tickets: category agreement 13/23 for `llama3.2:1b` and 21/23 for the keyword fallback; 9 of the 10 tickets that must reach a human were escalated on the LLM path. |
 | **[Document Layout Automator](projects/file-layout-automator/)** | C# · .NET 8 · WPF + console CLI | Turns CSV rows into fixed-width layout files. It rejects a value instead of truncating it, reports line, field and reason, and writes nothing while any row fails. The desktop app and the CLI share one runner. | 38 xunit tests, including golden tests that compare the committed `sample_output/` with the engine's output. `dotnet build -warnaserror` passes with 0 warnings. |
 | **[Collections Aging SQL](projects/collections-aging-sql/)** | DuckDB SQL · thin Python harness | Ages every open invoice from the policy due date, assigns one escalating dunning stage, applies cash FIFO so surplus is unapplied and cannot read as money owed, and lists duplicate-payment candidate pairs. Unusable rows land in `rejected_rows.csv` with a reason, and the run stops if invoiced ≠ applied + outstanding. | 37 pytest tests, including golden tests that diff all seven committed output files against a fresh run (LF everywhere: the report matches on Windows too). Amount text that is not an integer literal is rejected, duplicated invoice or payment ids are rejected after their first occurrence, and conservation holds three identities: rows, invoice cents and every payment cent landing in exactly one bucket. Ruff, mypy and an 85% branch-coverage gate pass; the installed CLI reproduces `sample_output/` byte for byte. |
-
- reproduces `sample_output/` byte for byte. |
-| **[iPhone vs Galaxy in Monterrey](projects/iphone-vs-samsung/)** | SQLite · Python (stdlib) · Leaflet map | Maps the search interest of iPhone vs Samsung Galaxy across 22–32 localities of the Monterrey metro for 2020 and 2025, fusing Google Trends with the INEGI Census by locality name match and comparing search share against real national usage (StatCounter). | The pipeline itself is verified: `build_db.py` rebuilds the base from the committed raw files (all hashed into a `meta` table), `02_sanity_checks.sql` returns zero rows on the current build, and CI runs the build, the sanity queries and the map generation on every push. README states caveats plainly: search interest, not users; national usage, not city-level. |
+| **[iPhone vs Galaxy in Monterrey](projects/iphone-vs-samsung/)** | SQLite · Python (stdlib) · Leaflet map | Maps the search interest of iPhone vs Samsung Galaxy across the Monterrey metro (22 localities with data in 2020, 32 in 2025), matching Google Trends to the INEGI 2020 Census by locality name and setting the metro search share against StatCounter's national web-traffic share. | `build_db.py` rebuilds the base from the committed raw files and records each file in a `meta` table with its source, URL and capture date. `02_sanity_checks.sql` returns zero rows on the current build, and the CI job runs the build, the sanity queries and the map generation. The README states the caveats: search interest, not users; national web traffic, not city-level usage. |
 
 ## Problem → root cause → solution → how it would be measured
 
@@ -106,28 +104,22 @@ crossing three public data sources.
 - **Problem.** An open-invoice sheet has to say, per invoice, how much is still
   owed, how late it is, which reminder or final notice must go out, and
   whether that "double payment" is the same charge paid twice.
-- **Root causes it is built around.** Amount keys parsed loosely (a text
-  amount that is not an integer literal — pesos with decimals, exponent or
-  underscore notation — used to be rounded into cents with no trace), cash applied out of order
+- **Root causes it is built around.** Amounts parsed loosely (an unparseable
+  amount vanishing from the aging without a trace), cash applied out of order
   (surplus over the invoice total being read as money still owed), aging
   counted from the issue date instead of the due date, rejected rows
-  disappearing between tools, duplicated invoice or payment ids (an export
-  run twice inflating the money), and a duplicate rule that flags every pair in
+  disappearing between tools, and a duplicate rule that flags every pair in
   the book.
 - **Solution.** Two CSVs go through one staging pass that reads everything as
-  text, demands integer-literal amounts and casts with `TRY_CAST`; unusable
-  rows land in `rejected_rows.csv` with the first problem that hit them, and
-  a second, uniqueness, pass rejects repeated invoice and payment ids.
-  Payments are applied FIFO in SQL (ties decided by file line order) and
+  text and casts with `TRY_CAST`; unusable rows land in `rejected_rows.csv`
+  with the first problem that hit them. Payments are applied FIFO in SQL and
   each applies only up to what the invoice owed; the surplus is unapplied cash
   in its own column. Buckets count days past the **due date** (current,
   1-30, 31-60, 61-90, 91-plus) and dunning stages only escalate
   (pre_dunning → D3 → D15 → D35 → D60). Duplicate candidates are pairs (same
   customer, same amount, ≤ 7 days) for a reviewer. Before any report is
-  written, the runner checks three identities — invoice rows, invoice cents
-  and every payment cent (applied + unapplied + orphan) — and stops with
-  exit 1 if any fails; `--fail-on-findings` returns exit 2 for schedulers
-  and a bad `--as-of` flag exits 4.
+  written, the runner checks two identities (rows and cents) and stops with
+  exit 1 if either fails; `--fail-on-findings` returns exit 2 for schedulers.
   The row identity holds by construction and is kept as a regression guard;
   the cents identity catches over-application. The project README lists what
   the staging does not catch yet.
@@ -149,9 +141,12 @@ crossing three public data sources.
   Trends downloads are not comparable unless the share is read *within* each
   locality (that is what the schema forces).
 - **Solution.** One SQLite base from three sources, each file recorded in
-  `meta` with URL and date; SQL that reports the share per locality (weighting
-  by Census population), the 2020→2025 change and the gap between Metro
-  search (87% iPhone) and national usage (~39% Apple); sanity queries that
+  `meta` with URL and capture date; SQL that reports the share per locality
+  (weighting by Census population), the 2020→2025 change and the gap between
+  metro search and national web traffic (in 2025, iPhone takes 87% of
+  iPhone + Galaxy searches in the metro, while Apple takes ~39% of Apple +
+  Samsung web traffic nationally and ~16% of all mobile web traffic, per
+  StatCounter); sanity queries that
   turn every matching problem into named rows rather than silent loss; and an
   interactive satellite map. Python is stdlib-only: the base rebuilds without
   a single install.
@@ -197,7 +192,8 @@ crossing three public data sources.
 ## Repository-wide checks
 
 - **CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on
-  pushes to `main`, `feat/**` and `fix/**`, and on pull requests to `main`:
+  pushes to `main`, `feat/**`, `fix/**` and `chore/**`, and on pull requests to
+  `main`:
   - reconciliation-engine, on pandas 2.x and 3.x: `pip install -e ".[dev]"`,
     ruff, mypy, pytest with an 85% coverage gate, and two smoke checks. The
     installed `reconcile` command must reproduce `sample_output/`, and the SQL
@@ -236,8 +232,9 @@ company.
 ## How it was built
 
 Built with the help of AI coding tools. Each project's README documents its
-design decisions, how it is tested and its known limitations, and each
-CHANGELOG records what changed between versions.
+design decisions, how it is checked and its known limitations. The four
+billing projects keep a CHANGELOG of what changed between versions;
+iphone-vs-samsung does not have one yet.
 
 ## Quick review
 
@@ -283,4 +280,21 @@ docs/executive-summary.md         one-page summary (docs/build_summary.py genera
 .github/workflows/                CI and Docker workflows
 ```
 
-MIT licensed (see [LICENSE](LICENSE)).
+## License and data sources
+
+The code and the synthetic datasets are MIT licensed (see [LICENSE](LICENSE)).
+The MIT license does not cover the public raw files committed under
+[`projects/iphone-vs-samsung/data/raw/`](projects/iphone-vs-samsung/data/raw/)
+or the figures derived from them (including the generated map); they keep their
+sources' terms:
+
+- INEGI, Censo de Población y Vivienda 2020 (ITER), used under the
+  "Términos de Libre Uso de la Información del INEGI". Source: INEGI.
+- StatCounter Global Stats, mobile vendor market share in Mexico, licensed
+  under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+  Source: Statcounter Global Stats.
+- Google Trends exports (topics *iPhone* and *Samsung Galaxy*, Nuevo León).
+  Data source: Google Trends (https://www.google.com/trends).
+
+The map's base tiles are credited on the map itself (Esri and its data
+partners, including OpenStreetMap contributors).

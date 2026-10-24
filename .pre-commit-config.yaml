@@ -3,8 +3,8 @@
 # Run against every file:    pre-commit run --all-files
 #
 # Ruff reads each project's own [tool.ruff] settings (projects/*/pyproject.toml),
-# the same configuration CI uses. Both Python projects pass ruff 0.17.2 cleanly;
-# CI installs ruff from each project's dev extras.
+# the same configuration CI uses. CI installs ruff from each project's dev
+# extras, pinned to the same version as the hook below (ruff==0.17.2).
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

@@ -227,5 +227,6 @@ tests/                  pytest suite (both engines)
 ## Context
 
 Personal portfolio project. The problem framing comes from the author's
-billing-audit work in freight (about 240 invoices a day); none of that work's
-data or code is in this repository, and no figure above describes it.
+billing work in freight (Central Transport: 240+ bills of lading a day and
+1,000+ invoices a month; figures from his CV). None of that work's data or
+code is in this repository, and no figure above describes it.

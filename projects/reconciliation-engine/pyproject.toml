@@ -21,8 +21,9 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
-    "ruff>=0.6",
-    "mypy>=1.10",
+    # Linters pinned so CI, pre-commit and local runs agree (.pre-commit-config.yaml pins ruff too).
+    "ruff==0.17.2",
+    "mypy==2.4.0",
 ]
 
 [project.scripts]

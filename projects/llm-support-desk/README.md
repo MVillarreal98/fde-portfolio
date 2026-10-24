@@ -250,7 +250,9 @@ Ollama stopped: the keyword fallback decides and the ticket goes to a human:
   measured.
 - No authentication, authorization or rate limiting on the UI/API. The default bind
   is `localhost`; the container binds `0.0.0.0`.
-- A single classification step, not a multi-step agent with tools.
+- A single classification step, not a multi-step agent with tools. The CLI
+  help, the UI title and the package docstring still say "Triage Agent"; it
+  means the triage component, not an autonomous agent.
 - The keyword lexicon is small and regex-based (English and Spanish).
 - Ticket text is stored in plaintext in SQLite.
 - No circuit breaker in front of Ollama; `ThreadingHTTPServer` is not meant for high

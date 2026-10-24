@@ -115,6 +115,24 @@ def _check_conservation(con: duckdb.DuckDBPyConnection, result: RunResult) -> No
             f" ({result.payments_valid}) + rejected ({result.payments_rejected})"
         )
 
+    # Uniqueness ids: the staging dedupe pass makes this hold by construction,
+    # but the check stays so a future SQL change cannot reintroduce a repeated
+    # id (which inflates invoiced/applied money silently).
+    ids = con.execute(
+        """
+        SELECT
+            COUNT(*) - COUNT(DISTINCT invoice_id),
+            (SELECT COUNT(*) - COUNT(DISTINCT payment_id) FROM t_payments)
+        FROM t_invoices
+        """
+    ).fetchone()
+    assert ids is not None
+    if ids[0] or ids[1]:
+        raise ConservationIntegrityError(
+            f"duplicate ids in the clean pool: {ids[0]} repeated invoice_id,"
+            f" {ids[1]} repeated payment_id"
+        )
+
     money = con.execute(
         """
         WITH applied AS (
@@ -172,7 +190,10 @@ def run_pipeline(
     """Stages both CSVs, checks conservation and writes every output file."""
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
-    validated = date.fromisoformat(as_of).isoformat()  # validated and normalized
+    try:
+        validated = date.fromisoformat(as_of).isoformat()  # validated and normalized
+    except ValueError as exc:
+        raise AgingDataError(f"as_of must be an ISO date (YYYY-MM-DD), got: {as_of!r}") from exc
 
     result = RunResult(as_of=validated)
     con = duckdb.connect(database=":memory:")
@@ -196,11 +217,20 @@ def run_pipeline(
                 columns, rows = _run_sql(con, _sql_text(sql_name))
             except duckdb.Error as exc:
                 raise AgingDataError(f"{sql_name} failed: {exc}") from exc
-            result.files[filename] = write_rows_csv(columns, rows, out_path / filename)
+            try:
+                result.files[filename] = write_rows_csv(columns, rows, out_path / filename)
+            except OSError as exc:
+                # A locked file (programs/OneDrive) or an unreachable out_dir
+                # must keep the same failure contract: the run fails with
+                # AgingDataError, not with a raw traceback.
+                raise AgingDataError(f"could not write output: {exc}") from exc
             logger.info("wrote %s (%d rows)", filename, result.files[filename])
 
         report_path = out_path / REPORT_FILENAME
-        report_path.write_text(_build_report(result), encoding="utf-8")
+        try:
+            report_path.write_text(_build_report(result), encoding="utf-8")
+        except OSError as exc:
+            raise AgingDataError(f"could not write output: {exc}") from exc
         logger.info("wrote %s", REPORT_FILENAME)
     finally:
         con.close()
@@ -208,9 +238,11 @@ def run_pipeline(
 
 
 def _build_report(result: RunResult) -> str:
-    findings_by_code = {code: 0 for code in FINDING_CODES}
+    # A code missing from FINDING_CODES is counted and rendered with its own
+    # code instead of crashing after the CSVs were already written.
+    findings_by_code: dict[str, int] = {code: 0 for code in FINDING_CODES}
     for finding in result.findings:
-        findings_by_code[finding.code] += 1
+        findings_by_code[finding.code] = findings_by_code.get(finding.code, 0) + 1
 
     lines = [
         "# Collections aging report",
@@ -247,6 +279,10 @@ def _build_report(result: RunResult) -> str:
         "|---|---:|",
     ]
     lines += [f"| {code} | {findings_by_code[code]} |" for code in FINDING_CODES]
+    # Unknown codes cannot appear today, but a future one must still render
+    # with its count rather than disappear from the report.
+    unknown = [c for c in findings_by_code if c not in FINDING_CODES]
+    lines += [f"| {code} (unexpected) | {findings_by_code[code]} |" for code in unknown]
     lines += [
         "",
         "All money figures are built only from rows that passed staging; every",

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "collections-aging-sql"
-version = "1.0.0"
+version = "1.1.0"
 description = "Collections aging, dunning states and cash application as DuckDB SQL, with conservation checks"
 readme = "README.md"
 requires-python = ">=3.10"

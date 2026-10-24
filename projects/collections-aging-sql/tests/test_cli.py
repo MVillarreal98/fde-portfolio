@@ -74,4 +74,6 @@ def test_version_flag(capsys: pytest.CaptureFixture) -> None:
     with pytest.raises(SystemExit) as excinfo:
         main(["--version"])
     assert excinfo.value.code == 0
-    assert "collections-aging 1.0.0" in capsys.readouterr().out
+    from aging_sql._version import __version__
+
+    assert f"collections-aging {__version__}" in capsys.readouterr().out

@@ -228,7 +228,10 @@ def run_pipeline(
 
         report_path = out_path / REPORT_FILENAME
         try:
-            report_path.write_text(_build_report(result), encoding="utf-8")
+            # write_bytes, not write_text: text mode translates \n into
+            # platform line endings, which would break the byte-for-byte
+            # golden comparison of collections_report.md on Windows.
+            report_path.write_bytes(_build_report(result).encode("utf-8"))
         except OSError as exc:
             raise AgingDataError(f"could not write output: {exc}") from exc
         logger.info("wrote %s", REPORT_FILENAME)

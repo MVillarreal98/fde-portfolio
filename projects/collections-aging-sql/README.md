@@ -150,9 +150,6 @@ schedulers) · `1` unreadable inputs or a failed conservation check.
   month.
 - A payment to an invoice that was rejected in staging is reported as
   `orphan_payment` (unknown invoice).
-- On Windows `collections_report.md` is written with CRLF line endings, so
-  its golden test passes on Linux CI but fails on a fresh Windows clone; the
-  CSV files are LF everywhere.
 - Payment plans, promises to pay and per-customer dunning overrides are out of
   scope.
 

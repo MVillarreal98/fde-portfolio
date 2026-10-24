@@ -3,6 +3,30 @@
 All notable changes to the Collections Aging SQL project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] - 2026-10-24
+
+### Added
+- Duplicate-id rejection in staging: a repeated `invoice_id` or `payment_id`
+  is rejected as `duplicate_invoice_id` / `duplicate_payment_id` after its
+  first occurrence, so amended or double-entered rows cannot inflate the
+  money (a repeated id used to inflate invoiced cash silently).
+- Uniqueness identity in the conservation check (ids are distinct in the
+  clean pools), independent of the SQL pass.
+- Tests: duplicate ids (invoice and payment), duplicate detection ignoring
+  malformed twins, first-problem-wins ordering, header-only inputs, clean
+  run with `--fail-on-findings` (exit 0) and a month gap in the monthly
+  series (documented behaviour).
+
+### Changed
+- Exit code for a bad `--as-of` is now 4; 2 means findings only.
+- FIFO application ties break by file line order before `payment_id`, so
+  text ordering of ids no longer decides payment order.
+
+### Fixed
+- `collections_report.md` is written with the same line endings on every
+  platform (written as bytes), so its golden test passes on a fresh Windows
+  clone too; the file only ever differed by CRLF there.
+
 ## [1.0.0] - 2026-10-23
 
 ### Added

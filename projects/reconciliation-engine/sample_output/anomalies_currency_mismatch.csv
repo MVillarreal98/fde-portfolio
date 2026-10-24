@@ -1,0 +1,2 @@
+transaction_ref,merchant,channel,ops_currency,settlement_currency,ops_amount,settlement_total
+T027,Subscription Renewal,CARD,USD,MXN,100.00,100.00

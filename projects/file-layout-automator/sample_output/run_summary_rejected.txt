@@ -1,0 +1,11 @@
+Perfil: Guía Depósito (deposit_guide), 31 posiciones por línea
+Origen: data/sample_input.csv
+Filas aceptadas: 2
+Filas rechazadas: 6
+Archivo generado: ninguno (no se genera archivo mientras haya filas rechazadas)
+Línea 4 — tipo_registro: no cumple formato esperado (tipo de registro PKG): "PSKG"
+Línea 5 — importe: no cumple formato esperado (importe con punto y 2 decimales, p. ej. 48.50): "602.5"
+Línea 6 — importe: vacío y requerido
+Línea 7 — importe: no cumple formato esperado (importe con punto y 2 decimales, p. ej. 48.50): "ABC.99"
+Línea 8 — referencia: vacío y requerido
+Línea 9 — tienda: no cumple formato esperado (número de tienda de 1 a 4 dígitos): "10101"

@@ -18,4 +18,11 @@
     <ProjectReference Include="..\FileLayoutAutomator.csproj" />
   </ItemGroup>
 
+  <!-- Synthetic demo inputs and the committed sample_output/ artifacts, so the
+       tests can check that those artifacts are exactly what the code produces. -->
+  <ItemGroup>
+    <None Include="..\data\*.csv" Link="fixtures\data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\sample_output\*" Link="fixtures\sample_output\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

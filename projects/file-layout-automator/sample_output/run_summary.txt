@@ -1,8 +1,0 @@
-Filas aceptadas: 3
-Filas rechazadas: 5
-Archivo generado: C:\Users\miket\OneDrive\Documentos\Proyecto predeterminado\projects\file-layout-automator\sample_output\sample_input_DepositGuide.txt
-Línea 5 — importe: no cumple formato esperado (^\d+(\.\d{2})?$): "602.5"
-Línea 6 — importe: vacío y requerido
-Línea 7 — importe: no cumple formato esperado (^\d+(\.\d{2})?$): "ABC.99"
-Línea 8 — referencia: vacío y requerido
-Línea 9 — tienda: no cumple formato esperado (^\d{1,4}$): "10101"

@@ -1,0 +1,6 @@
+Perfil: Guía Depósito (deposit_guide), 31 posiciones por línea
+Origen: data/sample_input_cleaned.csv
+Filas aceptadas: 8
+Filas rechazadas: 0
+Archivo generado: sample_output\sample_input_cleaned_deposit_guide.txt
+Sin incidencias. Layout íntegro.

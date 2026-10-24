@@ -1,6 +1,8 @@
 # Full local deployment: model server + one-shot model pull + triage API.
-# `docker compose up` gives a working desk at http://localhost:8000;
-# without the Ollama services the app still runs on its deterministic fallback.
+# `docker compose up` gives a working desk at http://localhost:8000.
+# The desk only waits for the Ollama server to START, not for the model pull:
+# until the model is available it answers from the deterministic fallback
+# (/api/health reports "degraded"), so an offline host still gets a working desk.
 
 services:
   ollama:
@@ -31,11 +33,13 @@ services:
     environment:
       OLLAMA_HOST: http://ollama:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+      SUPPORT_DESK_DB: /data/decisions.db
+    volumes:
+      - desk-data:/data        # SQLite decision log survives restarts
     depends_on:
       ollama:
-        condition: service_healthy
-      model-init:
-        condition: service_completed_successfully
+        condition: service_started
 
 volumes:
   ollama:
+  desk-data:

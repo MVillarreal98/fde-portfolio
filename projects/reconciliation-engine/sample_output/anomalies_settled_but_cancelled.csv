@@ -1,0 +1,2 @@
+transaction_ref,merchant,channel,status,ops_amount,settlement_total,statement_ids
+T011,Refund - Seller B,SPEI,refunded,450.00,450.00,S012

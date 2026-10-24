@@ -1,3 +1,4 @@
 transaction_ref,merchant,channel,ops_amount,settlement_total,discrepancy_type
-T013,Marketplace Seller D,SPEI,1250.0,0.0,ops_without_settlement (possible revenue leakage)
-T499,,,0.0,250.0,settlement_without_ops_record (possible phantom revenue)
+T013,Marketplace Seller D,SPEI,1250.00,0.00,ops_without_settlement (possible revenue leakage)
+T025,Convenience Store 04,OXXO,75.00,0.00,ops_without_settlement (possible revenue leakage)
+T499,,,0.00,250.00,settlement_without_ops_record (possible phantom revenue)

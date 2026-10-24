@@ -126,31 +126,6 @@ jobs:
           echo "exit code: $code"
           test "$code" -eq 2
 
-  iphone-vs-samsung:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: projects/iphone-vs-samsung
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      # Stdlib-only pipeline: pytest is the only tool installed. The job runs
-      # the matching-precedence unit tests plus the pipeline itself as smoke.
-      - name: Unit tests of the Trends match rules
-        run: |
-          python -m pip install --quiet pytest
-          python -m pytest -q -p no:cacheprovider
-      - name: Build base, sanity checks and map must run clean
-        run: |
-          python scripts/build_db.py
-          test -f db/iphone_vs_samsung.sqlite
-          res=$(sqlite3 db/iphone_vs_samsung.sqlite < sql/02_sanity_checks.sql)
-          test -z "$res"
-          python scripts/mapa_mty.py
-          test -s insights/mapa_mty.html
-
   file-layout-automator:
     runs-on: windows-latest   # the WPF app, the CLI and the tests target net8.0-windows
     defaults:

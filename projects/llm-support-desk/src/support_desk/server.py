@@ -34,7 +34,7 @@ PAGE = """<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Support Desk — Triage Agent</title>
+<title>Support Desk — Triage Desk</title>
 <style>
   :root { font-family: system-ui, sans-serif; }
   body { margin: 0; display: grid; grid-template-columns: 420px 1fr; height: 100vh; }
@@ -65,7 +65,7 @@ PAGE = """<!doctype html>
 </head>
 <body>
 <aside>
-  <h1>🧾 Support Desk — Triage Agent</h1>
+  <h1>🧾 Support Desk — Triage Desk</h1>
   <div class="sub">Local-LLM claim classifier · rules-enforced · Ollama REST</div>
   <span id="health" class="health down">checking local inference…</span>
   <label for="text">Customer's claim</label>

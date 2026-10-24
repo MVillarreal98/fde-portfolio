@@ -1,4 +1,4 @@
-"""Support Desk Triage Agent: local-LLM claim triage with business rules."""
+"""Support Desk Triage Desk: local-LLM claim triage with business rules."""
 
 __version__ = "1.2.0"  # keep in sync with pyproject.toml
 

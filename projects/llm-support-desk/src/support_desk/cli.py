@@ -24,7 +24,7 @@ log = logging.getLogger("support_desk.cli")  # not __name__: "__main__" under py
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="support-desk", description="Support Desk Triage Agent (local LLM + rules)."
+        prog="support-desk", description="Support Desk Triage Desk (local LLM + rules)."
     )
     parser.add_argument("--port", type=int, help="HTTP port (env SUPPORT_DESK_PORT, 8000)")
     parser.add_argument("--host", help="bind address (env SUPPORT_DESK_HOST, localhost)")

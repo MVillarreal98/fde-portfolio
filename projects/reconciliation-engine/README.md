@@ -136,8 +136,8 @@ ruff check . && ruff format --check .
 mypy src
 ```
 
-171 tests: one or more per rule (each run on both engines), the 16 edge cases
-found in the v1.0.0 review as regression tests, engine parity, the CLI exit
+171 tests: one or more per rule (each run on both engines), the 16 review edge cases
+found in the v1.0.0 review as regression tests (15 run through both engines, 1 only checks option validation); engine parity, the CLI exit
 codes, the conservation checks, packaging (every runtime import is declared)
 and the golden test against `sample_output/`. Measured coverage of the Python
 package: 100% of statements and branches with pandas 3.1.0 and with pandas

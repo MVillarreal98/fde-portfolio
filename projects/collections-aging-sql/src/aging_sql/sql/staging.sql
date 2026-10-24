@@ -59,6 +59,33 @@ WHERE CASE
         WHEN due_date < issued_date THEN 'due_before_issue'
       END IS NOT NULL;
 
+-- Uniqueness pass: the first occurrence of an invoice_id (by file line)
+-- is the real record; later occurrences are duplicates of it (amended or
+-- re-entered rows) and go to rejected_rows. The pass only sees rows that
+-- passed every field check, so a malformed twin keeps its own row-level
+-- reason and cannot disqualify a valid invoice.
+CREATE OR REPLACE TEMP TABLE dup_invoice_rows AS
+SELECT
+    'invoice' AS source,
+    invoice_id_trim AS reference,
+    line_no,
+    'duplicate_invoice_id' AS reason
+FROM (
+    SELECT
+        line_no,
+        invoice_id_trim,
+        row_number() OVER (PARTITION BY invoice_id_trim ORDER BY line_no)
+            AS id_seq
+    FROM parsed_invoices p
+    WHERE trim(invoice_id) <> ''   -- blank ids already carry their own reason
+      AND NOT EXISTS (
+          SELECT 1 FROM rejected_invoice_rows r
+          WHERE r.source = 'invoice' AND r.line_no = p.line_no
+      )
+) WHERE id_seq > 1;
+
+INSERT INTO rejected_invoice_rows SELECT * FROM dup_invoice_rows;
+
 CREATE OR REPLACE TEMP TABLE t_invoices AS
 SELECT
     invoice_id_trim AS invoice_id,
@@ -114,9 +141,35 @@ WHERE CASE
         WHEN paid_date > getvariable('as_of') THEN 'future_payment'
       END IS NOT NULL;
 
+-- Same uniqueness pass for payments: a repeated payment_id (a double
+-- entry in the payments file) is rejected after its first occurrence, so
+-- an invoice cannot be silently paid in full by a re-loaded payment.
+CREATE OR REPLACE TEMP TABLE dup_payment_rows AS
+SELECT
+    'payment' AS source,
+    payment_id_trim AS reference,
+    line_no,
+    'duplicate_payment_id' AS reason
+FROM (
+    SELECT
+        line_no,
+        payment_id_trim,
+        row_number() OVER (PARTITION BY payment_id_trim ORDER BY line_no)
+            AS id_seq
+    FROM parsed_payments p
+    WHERE trim(payment_id) <> ''
+      AND NOT EXISTS (
+          SELECT 1 FROM rejected_payment_rows r
+          WHERE r.source = 'payment' AND r.line_no = p.line_no
+      )
+) WHERE id_seq > 1;
+
+INSERT INTO rejected_payment_rows SELECT * FROM dup_payment_rows;
+
 CREATE OR REPLACE TEMP TABLE t_payments AS
 SELECT
     payment_id_trim AS payment_id,
+    line_no,
     invoice_id_trim AS invoice_id,
     paid_date,
     amount_cents,
@@ -127,14 +180,18 @@ WHERE NOT EXISTS (
     WHERE r.source = 'payment' AND r.line_no = p.line_no
 );
 
--- FIFO cash application: payments are applied to their invoice in paid_date,
--- payment_id order. Each payment is applied only up to what the invoice still
--- owed when it arrived; the rest is unapplied cash and is reported as such.
+-- FIFO cash application: payments are applied to their invoice in paid_date
+-- order, ties broken by file line_no (earlier in the file wins) and then by
+-- payment_id, so application never depends on text ordering of the ID
+-- ('PAY-10' vs 'PAY-9'). Each payment is applied only up to what the invoice
+-- still owed when it arrived; the rest is unapplied cash and is reported as
+-- such.
 CREATE OR REPLACE TEMP TABLE t_applied AS
 WITH matched AS (
     SELECT
         p.payment_id,
         p.invoice_id,
+        p.line_no,
         i.customer_id,
         p.paid_date,
         p.method,
@@ -148,7 +205,7 @@ ordered AS (
         matched.*,
         SUM(pay_amt) OVER (
             PARTITION BY invoice_id
-            ORDER BY paid_date, payment_id
+            ORDER BY paid_date, line_no, payment_id
             ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
         ) AS cum_paid
     FROM matched

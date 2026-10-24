@@ -44,6 +44,7 @@ layout_output/
 # Local tooling
 .env
 .playwright-mcp/
+.opencode/
 
 # Editor
 .vscode/

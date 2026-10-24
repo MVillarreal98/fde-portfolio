@@ -64,7 +64,10 @@ def test_unreadable_input_exits_1(tmp_path: Path, caplog: pytest.LogCaptureFixtu
 def test_bad_as_of_date_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(SystemExit) as excinfo:
         run_cli(tmp_path, "--as-of", "30-09-2026")
-    assert excinfo.value.code == 2
+    # 4 = argument rejected before the pipeline ran. 2 is reserved for
+    # findings under --fail-on-findings; a scheduler must never page AR
+    # because an operator typo'd a date.
+    assert excinfo.value.code == 4
 
 
 def test_version_flag(capsys: pytest.CaptureFixture) -> None:

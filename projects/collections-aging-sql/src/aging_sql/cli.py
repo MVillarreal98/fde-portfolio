@@ -60,7 +60,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         date.fromisoformat(args.as_of)
     except ValueError:
-        parser.error(f"--as-of must be an ISO date (YYYY-MM-DD), got: {args.as_of}")
+        # 4 = we never ran: a bad flag is not a pipeline failure (1) and not
+        # "findings were raised" (2). Codes: 0 clean, 1 pipeline failure,
+        # 2 findings under --fail-on-findings, 4 bad flag value.
+        parser.exit(
+            4,
+            "collections-aging: error: "
+            f"--as-of must be an ISO date (YYYY-MM-DD), got: {args.as_of}\n",
+        )
 
     try:
         result = run_pipeline(

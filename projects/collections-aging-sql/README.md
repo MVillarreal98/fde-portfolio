@@ -18,7 +18,7 @@ and writes deterministic outputs.
   is that "double payment" the same charge paid twice, and does the money add
   up. Doing it by hand in a spreadsheet is where aging drifts and double
   payments hide.
-- **Root causes it is built around.** Amounts parsed loosely (a `abc` amount
+- **Root causes it is built around.** Amounts parsed loosely (an `abc` amount
   vanishing from the aging without a trace), payments applied out of order or
   double-applied (cash past the invoice total being read as money still owed),
   aging counted from the issue date instead of the policy due date, rejected
@@ -115,8 +115,9 @@ schedulers) · `1` unreadable inputs or a failed conservation check.
 - **Rule tests** plant hand-computable fixtures: invoices at the aging
   boundaries 0/1, 30/31 and 90/91 days past due plus one not yet due (the
   60/61 boundary is not tested), dunning stages at 0, 1, 3, 30, 52 and 211
-  days (the exact 15, 35 and 60-day thresholds are not tested), FIFO application with the
-  third payment landing partially (+ the overpayment finding), the duplicate
+  days (the exact 15, 35 and 60-day thresholds are not tested), FIFO
+  application with the third payment landing partially (+ the overpayment
+  finding), the duplicate
   window at 7 versus 8 days and across different customers, every rejection
   reason once, orphan payments excluded from aged money but reported as a
   finding, and `--as-of` moving rows between "future payment" and applied
@@ -141,10 +142,11 @@ schedulers) · `1` unreadable inputs or a failed conservation check.
   with amounts in pesos instead of cents is not caught.
 - Repeated `invoice_id` or `payment_id` values are not rejected. A payment
   exported twice is applied twice (it can close an invoice that still owes
-  money and is not listed as a duplicate candidate); a repeated invoice with
-  payments stops the run on the cents identity.
-- There is no payment-side identity (payments = applied + unapplied +
-  orphan), so it is not checked by code; on the demo data it holds by hand.
+  money and is not listed as a duplicate candidate); a repeated invoice is
+  aged twice or stops the run on the cents identity, depending on its
+  payments.
+- The runner has no payment-side identity (payments = applied + unapplied +
+  orphan cash); on the demo data it holds when checked by hand.
 - The month-over-month delta in `monthly_collections.csv` compares with the
   previous month that has data for that method, not the previous calendar
   month.

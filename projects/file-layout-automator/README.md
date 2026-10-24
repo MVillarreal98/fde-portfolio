@@ -133,8 +133,8 @@ folder, then run `.\capture.ps1 -Name <file>.png`.
 ## Run / build / test
 
 ```powershell
-dotnet build DocumentLayoutAutomator.sln      # .NET 8 SDK on Windows; builds with 0 warnings
-dotnet test tests                             # xunit over the engine, the runner and sample_output/
+dotnet build DocumentLayoutAutomator.sln -warnaserror  # .NET 8 SDK on Windows 10; 0 warnings (CI builds the same way)
+dotnet test tests                             # 38 xunit tests over the engine, the runner and sample_output/
 dotnet run --project FileLayoutAutomator.csproj                                   # GUI
 dotnet run --project FileLayoutAutomator.csproj -- --source data\sample_input.csv # GUI, demo file pre-loaded (first profile)
 dotnet run --project tools/LayoutCli -- --profile carrier_asn --source <file.csv> [--out <dir>] [--summary <file.txt>]

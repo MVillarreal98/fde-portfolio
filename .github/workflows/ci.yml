@@ -136,8 +136,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # Stdlib-only: no install step exists. The smoke check is the pipeline
-      # itself: build the base, run the quality gates and regenerate the map.
+      # Stdlib-only pipeline: pytest is the only tool installed. The job runs
+      # the matching-precedence unit tests plus the pipeline itself as smoke.
+      - name: Unit tests of the Trends match rules
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest -q -p no:cacheprovider
       - name: Build base, sanity checks and map must run clean
         run: |
           python scripts/build_db.py

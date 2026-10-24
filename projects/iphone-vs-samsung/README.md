@@ -65,7 +65,19 @@ Mapa interactivo: [`insights/mapa_mty.html`](insights/mapa_mty.html) ·
   comparables aunque sean descargas distintas.
 - Trends sólo reporta localidades con volumen suficiente; las chicas pueden
   aparecer en un año y no en el otro (ver `sql/04_cambio_2020_2025.sql`, Q4).
+- Un share de Trends menor a 1% (`<1`) se guarda como 0: Google sólo entrega
+  enteros, así que el share de una localidad mínima es un *censor* del dato,
+  no una medición de 0%.
 - StatCounter es contexto **nacional** (tráfico web, no unidades vendidas).
+
+## Cómo está probado
+
+- **Unit tests** de la precedencia del match (`tests/test_matching.py`,
+  8 fixtures): override por año y valor de `iphone` gana a todo, nombre
+  exacto > base > cabecera, empates por nombre más poblado, homónimo fuera
+  de la ZM por población *y por alias base*, duplicados y `EXCLUIR`.
+- **Pipeline como smoke**: `build_db.py` + `02_sanity_checks.sql` (cero
+  filas) + generación del mapa. Se corre en CI en cada push.
 
 ## Estructura
 

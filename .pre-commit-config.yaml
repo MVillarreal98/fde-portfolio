@@ -4,16 +4,20 @@
 #
 # Ruff reads each project's own [tool.ruff] settings (projects/*/pyproject.toml),
 # the same configuration CI uses. CI installs ruff from each project's dev
-# extras, pinned to the same version as the hook below (ruff==0.17.2).
+# dependencies and runs it on reconciliation-engine, llm-support-desk and
+# collections-aging-sql (the hook version is pinned by the dev extras).
+# iphone-vs-samsung has no pyproject.toml, so this hook checks its scripts
+# with ruff's defaults and CI does not lint them.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       # Committed demo artifacts are golden files compared byte for byte by the tests.
+      # Raw public downloads are kept exactly as retrieved.
       - id: trailing-whitespace
-        exclude: (^|/)sample_output/
+        exclude: (^|/)sample_output/|^projects/iphone-vs-samsung/data/raw/
       - id: end-of-file-fixer
-        exclude: (^|/)sample_output/
+        exclude: (^|/)sample_output/|^projects/iphone-vs-samsung/data/raw/
       - id: check-yaml
       - id: check-toml
       - id: check-merge-conflict

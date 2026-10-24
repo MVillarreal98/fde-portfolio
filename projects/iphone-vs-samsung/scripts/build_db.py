@@ -84,8 +84,12 @@ def nombre_base(name):
 
 
 def trends_value(text):
-    """'85 %', '85%', '<1', '' → 85, 85, 0, None."""
-    text = text.replace(" ", "").replace("%", "").strip()
+    """'85 %', '85%', '<1', '' → 85, 85, 0, None.
+
+    '<1' es un share censurado: Google sólo entrega enteros, así que un
+    share minúsculo de localidad chica se lee como 0 (caveat en el README;
+    entra al mapa con share de borde en vez de inflar el rango)."""
+    text = text.replace(" ", "").replace("%", "").strip()
     if not text:
         return None
     if text.startswith("<"):
@@ -176,12 +180,25 @@ def load_trends(con, path, periodo):
     lines = decode(path.read_bytes()).splitlines()
     # Antes de los datos vienen 'Categoría: …' y una línea vacía; el
     # encabezado es la primera línea con columnas separadas por coma.
-    start = next(i for i, line in enumerate(lines) if line.count(",") >= 2)
+    try:
+        start = next(i for i, line in enumerate(lines) if line.count(",") >= 2)
+    except StopIteration:
+        sys.exit(
+            f"Formato de Trends inesperado en {path.name}: ninguna línea "
+            "parece un encabezado CSV (>= 2 comas). Re-desde Trends y "
+            "verificar data/raw/download-checklist.md"
+        )
     rows = []
     for r in csv.reader(lines[start + 1:]):
         if len(r) >= 3 and r[0].strip():
             rows.append((periodo, r[0].strip(),
                          trends_value(r[1]), trends_value(r[2])))
+    if len(rows) < 10:
+        sys.exit(
+            f"Sospechoso: {path.name} trae {len(rows)} localidades "
+            "(una descarga sana trae 50+). Posible CSV truncado o página "
+            "sin datos; verificar la descarga."
+        )
     con.executemany(
         "INSERT INTO trends_localidad (periodo, trends_name, iphone, galaxy)"
         " VALUES (?, ?, ?, ?)", rows,
@@ -199,6 +216,8 @@ def load_statcounter(con, path):
     for r in reader:
         month = r["Date"].strip()[:7] + "-01"
         for vendor, share in r.items():
+            if not vendor:  # columna de alias implícita (restkey) o vacía
+                continue
             if vendor != "Date" and number(share) is not None:
                 rows.append((month, vendor.strip(), number(share)))
     con.executemany(
@@ -212,19 +231,33 @@ def load_statcounter(con, path):
 # ------------------------------------------------------------------
 # Empate Trends → INEGI
 # ------------------------------------------------------------------
+def ip_key(value):
+    """Normaliza el share de iphone para las llaves de override sin
+    importar la afinidad de columna: 83.0, '83' y b'83' → '83'."""
+    text = str(value).strip()
+    try:
+        number = float(text)
+    except ValueError:
+        return text.upper()
+    return str(int(number)) if number.is_integer() else str(number)
+
+
 def load_overrides():
     """trends_overrides.csv: periodo e iphone vacíos = aplica a cualquiera;
     loc = EXCLUIR para sacar la fila del mapa."""
     with open(REF / "trends_overrides.csv", encoding="utf-8") as f:
         return {
-            (r["periodo"].strip() or "*", norm(r["trends_name"]),
-             r["iphone"].strip() or "*"): (r["mun"].zfill(3), r["loc"].strip())
+            (r["periodo"].strip() or "*",
+             norm(r["trends_name"]),
+             ip_key(r["iphone"]) if r["iphone"].strip() else "*"): (
+                r["mun"].zfill(3), r["loc"].strip())
             for r in csv.DictReader(f)
         }
 
 
-def match_localidades(con, fuera_zm):
-    overrides = load_overrides()
+def match_localidades(con, fuera_zm, overrides=None):
+    if overrides is None:
+        overrides = load_overrides()
     by_name, by_name_sc, by_base, cabeceras = (defaultdict(list) for _ in range(4))
     for mun, nom_mun, loc, nom_loc, pob in con.execute(
         "SELECT mun, nom_mun, loc, nom_loc, COALESCE(pobtot, 0) FROM iter_localidad"
@@ -248,7 +281,7 @@ def match_localidades(con, fuera_zm):
         n = norm(name)
         override = next(
             (overrides[k] for k in [(p, n, i) for p in (periodo, "*")
-                                    for i in (str(iphone), "*")]
+                                    for i in (ip_key(iphone), "*")]
              if k in overrides),
             None,
         )
@@ -273,7 +306,12 @@ def match_localidades(con, fuera_zm):
                     # fuera de la ZM (p. ej. un rancho 'Galeana' en la ZM vs
                     # el pueblo de Galeana), la fila no es de Monterrey.
                     pob, mun, loc = max(candidates)
-                    if max(fuera_zm.get(k, -1) for k in (n, sin_ciudad(n))) > pob:
+                    # El screening usa las MISMAS claves que poblaron
+                    # fuera_zm (nombre, sin Ciudad, base) para que un
+                    # homónimo fuera de la ZM no se cuele por el alias con
+                    # el que su gemela dentro de la ZM se empató.
+                    screen_keys = (n, sin_ciudad(n), nombre_base(name))
+                    if max(fuera_zm.get(k, -1) for k in screen_keys) > pob:
                         results.append((tid, None, None, "fuera_zm", len(candidates)))
                     else:
                         results.append((tid, mun, loc, method, len(candidates)))

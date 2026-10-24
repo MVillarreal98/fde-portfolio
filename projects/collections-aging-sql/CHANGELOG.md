@@ -3,6 +3,30 @@
 All notable changes to the Collections Aging SQL project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-10-24
+
+### Added
+- Integer-literal guard on the amount columns: text that is not an exact
+  integer string (`1500.50`, `1e3`, `1_000`) is rejected as
+  `unparseable_amount` instead of being rounded by the `BIGINT` cast with
+  no trace (a pesos-with-cents figure would have entered as 1/100 of the
+  money, rounded).
+- Payments-side conservation identity: every payment cent must land in
+  exactly one of applied cash in invoices, unapplied surplus or orphan
+  cash. This is the check that catches an application join fan-out
+  (e.g. a duplicated invoice). The report lists the orphan total in its
+  own row.
+- Orphan payments whose invoice was rejected at staging now say so
+  (`invoice_rejected_at_staging=`) instead of claiming the invoice was
+  unknown.
+- Tests: decimals/exponent/underscore amounts, orphan detail on rejected
+  invoice and the payments identity with orphan + unapplied cash.
+
+### Changed
+- `requires-python` is 3.11+ (`tomllib` is used by the packaging tests);
+  the old 3.10 floor was not tested by CI anyway. The reconciliation
+  engine moves to `duckdb>=2.0` alongside for the same reason.
+
 ## [1.1.0] - 2026-10-24
 
 ### Added

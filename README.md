@@ -24,7 +24,7 @@ every open invoice must age and escalate on schedule.
 | **[Reconciliation Engine](projects/reconciliation-engine/)** | Python · pandas · DuckDB SQL | Reconciles an operations ledger against a settlement file. Each reference gets exactly one status, 7 rules explain the differences, unusable rows go to `rejected_rows.csv`, and conservation checks stop the run if the totals do not add up. The same rules run in pandas and in SQL. | 171 pytest tests with 100% statement and branch coverage on pandas 2.3.3 and 3.1.0. Parity tests require identical findings from both engines. A full run on 1,000,000 synthetic rows per side took 12.7 s (pandas) or 11.1 s (SQL) in a single run on one desktop machine. |
 | **[LLM Support Desk](projects/llm-support-desk/)** | Python (stdlib) · Ollama `llama3.2:1b` · SQLite · Docker | Triages payment claims. A local LLM proposes a category and severity; deterministic rules decide the action and can only escalate. Every decision is stored in SQLite with the prompt hash, the model and the rules that fired. | 133 pytest tests with 99% line and branch coverage, including prompt-injection tests against a fake model that obeys the injection. Offline eval on 23 labeled synthetic tickets: category agreement 13/23 for `llama3.2:1b` and 21/23 for the keyword fallback; 9 of the 10 tickets that must reach a human were escalated on the LLM path. |
 | **[Document Layout Automator](projects/file-layout-automator/)** | C# · .NET 8 · WPF + console CLI | Turns CSV rows into fixed-width layout files. It rejects a value instead of truncating it, reports line, field and reason, and writes nothing while any row fails. The desktop app and the CLI share one runner. | 38 xunit tests, including golden tests that compare the committed `sample_output/` with the engine's output. `dotnet build -warnaserror` passes with 0 warnings. |
-| **[Collections Aging SQL](projects/collections-aging-sql/)** | DuckDB SQL · thin Python harness | Ages every open invoice from the policy due date, assigns one escalating dunning stage, applies cash FIFO so surplus is unapplied and cannot read as money owed, and lists duplicate-payment candidate pairs. Unusable rows land in `rejected_rows.csv` with a reason, and the run stops if invoiced ≠ applied + outstanding. | 33 pytest tests, including golden tests that diff all seven committed output files against a fresh run (LF everywhere: the report matches on Windows too). Ruff, mypy and an 85% branch-coverage gate pass, and the installed CLI reproduces `sample_output/` byte for byte. |
+| **[Collections Aging SQL](projects/collections-aging-sql/)** | DuckDB SQL · thin Python harness | Ages every open invoice from the policy due date, assigns one escalating dunning stage, applies cash FIFO so surplus is unapplied and cannot read as money owed, and lists duplicate-payment candidate pairs. Unusable rows land in `rejected_rows.csv` with a reason, and the run stops if invoiced ≠ applied + outstanding. | 37 pytest tests, including golden tests that diff all seven committed output files against a fresh run (LF everywhere: the report matches on Windows too). Amount text that is not an integer literal is rejected, duplicated invoice or payment ids are rejected after their first occurrence, and conservation holds three identities: rows, invoice cents and every payment cent landing in exactly one bucket. Ruff, mypy and an 85% branch-coverage gate pass; the installed CLI reproduces `sample_output/` byte for byte. |
 
 ## Problem → root cause → solution → how it would be measured
 
@@ -97,22 +97,28 @@ every open invoice must age and escalate on schedule.
 - **Problem.** An open-invoice sheet has to say, per invoice, how much is still
   owed, how late it is, which reminder or final notice must go out, and
   whether that "double payment" is the same charge paid twice.
-- **Root causes it is built around.** Amounts parsed loosely (an unparseable
-  amount vanishing from the aging without a trace), cash applied out of order
+- **Root causes it is built around.** Amount keys parsed loosely (a text
+  amount that is not an integer literal — pesos with decimals, exponent or
+  underscore notation — used to be rounded into cents with no trace), cash applied out of order
   (surplus over the invoice total being read as money still owed), aging
   counted from the issue date instead of the due date, rejected rows
-  disappearing between tools, and a duplicate rule that flags every pair in
+  disappearing between tools, duplicated invoice or payment ids (an export
+  run twice inflating the money), and a duplicate rule that flags every pair in
   the book.
 - **Solution.** Two CSVs go through one staging pass that reads everything as
-  text and casts with `TRY_CAST`; unusable rows land in `rejected_rows.csv`
-  with the first problem that hit them. Payments are applied FIFO in SQL and
+  text, demands integer-literal amounts and casts with `TRY_CAST`; unusable
+  rows land in `rejected_rows.csv` with the first problem that hit them, and
+  a second, uniqueness, pass rejects repeated invoice and payment ids.
+  Payments are applied FIFO in SQL (ties decided by file line order) and
   each applies only up to what the invoice owed; the surplus is unapplied cash
   in its own column. Buckets count days past the **due date** (current,
   1-30, 31-60, 61-90, 91-plus) and dunning stages only escalate
   (pre_dunning → D3 → D15 → D35 → D60). Duplicate candidates are pairs (same
   customer, same amount, ≤ 7 days) for a reviewer. Before any report is
-  written, the runner checks two identities (rows and cents) and stops with
-  exit 1 if either fails; `--fail-on-findings` returns exit 2 for schedulers.
+  written, the runner checks three identities — invoice rows, invoice cents
+  and every payment cent (applied + unapplied + orphan) — and stops with
+  exit 1 if any fails; `--fail-on-findings` returns exit 2 for schedulers
+  and a bad `--as-of` flag exits 4.
   The row identity holds by construction and is kept as a regression guard;
   the cents identity catches over-application. The project README lists what
   the staging does not catch yet.

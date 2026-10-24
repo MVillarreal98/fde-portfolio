@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 
 using DocumentLayoutAutomator.Models;
@@ -21,7 +20,8 @@ public partial class MainWindow : Window
         };
         ProfileBox.SelectedIndex = 0;
 
-        // Optional headless-ish start (demo/CI): pre-load a source and transform.
+        // Optional demo start (--source): pre-load a source and transform it with
+        // the first profile. The scriptable entry point is tools/LayoutCli.
         if (!string.IsNullOrWhiteSpace(initialSource) && File.Exists(initialSource))
         {
             SourcePath.Text = initialSource;
@@ -63,8 +63,16 @@ public partial class MainWindow : Window
             DiagnosticsBox.Text = $"⚠ El archivo no existe:\n{path}";
             return;
         }
-        var lines = File.ReadLines(path).Take(15);
-        PreviewBox.Text = string.Join(Environment.NewLine, lines);
+        try
+        {
+            PreviewBox.Text = string.Join(Environment.NewLine, File.ReadLines(path).Take(15));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            DiagnosticsBox.Text = $"⚠ No se pudo leer el archivo (¿está abierto en Excel?):\n{ex.Message}";
+            return;
+        }
+        PreviewGroup.Header = "Archivo de origen (primeras líneas)";
         StatusBarText.Text = $"Vista previa cargada: {path}";
     }
 
@@ -85,25 +93,30 @@ public partial class MainWindow : Window
             return;
         }
 
-        var result = LayoutTransformer.Transform(File.ReadLines(path), profile);
-
-        if (result.RejectedRows == 0)
+        RunOutcome outcome;
+        try
         {
-            var outputDir = Path.Combine(Path.GetDirectoryName(path)!, "layout_output");
-            Directory.CreateDirectory(outputDir);
-            var outputPath = Path.Combine(
-                outputDir,
-                $"{Path.GetFileNameWithoutExtension(path)}_{profile.Name.Replace(' ', '_')}.txt");
-            File.WriteAllLines(outputPath, result.OutputLines, Encoding.ASCII);
+            outcome = LayoutRunner.Run(path, profile, LayoutRunner.DefaultOutputDir(path));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            DiagnosticsBox.Text = $"⚠ No se pudo leer o escribir el archivo (¿está abierto en Excel?):\n{ex.Message}";
+            StatusBarText.Text = "⚠ Error de archivo; no se generó nada.";
+            return;
+        }
 
-            DiagnosticsBox.Text = LayoutTransformer.BuildSummary(result, outputPath);
+        var result = outcome.Result;
+        DiagnosticsBox.Text = LayoutTransformer.BuildSummary(result, outcome.OutputPath);
+
+        if (outcome.OutputPath is { } outputPath)
+        {
+            PreviewGroup.Header = "Archivo generado (primeras líneas)";
             PreviewBox.Text = string.Join(Environment.NewLine, result.OutputLines.Take(15));
             StatusBarText.Text = $"✅ {result.AcceptedRows} filas transformadas → {outputPath}";
         }
         else
         {
-            DiagnosticsBox.Text = LayoutTransformer.BuildSummary(result, "(sin archivo)");
-            StatusBarText.Text = $"⚠ Corrige las {result.RejectedRows} incidencias y vuelve a ejecutar.";
+            StatusBarText.Text = $"⚠ Corrige las {result.RejectedRows} filas rechazadas y vuelve a ejecutar.";
         }
     }
 }

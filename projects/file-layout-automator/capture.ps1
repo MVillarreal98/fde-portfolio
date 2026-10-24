@@ -1,3 +1,8 @@
+# Captures the running DocumentLayoutAutomator window into docs\screenshots\<Name>.
+# Usage (from the project folder, with the app open):
+#   .\capture.ps1 -Name app-success.png
+param([string]$Name = "app.png")
+
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing
 Add-Type -TypeDefinition @'
 using System;
@@ -38,7 +43,7 @@ $g.ReleaseHdc($hdc)
 if (-not $ok) { throw "PrintWindow falló" }
 
 New-Item -ItemType Directory -Force docs\screenshots | Out-Null
-$bmp.Save("$PWD\docs\screenshots\app.png")
+$bmp.Save("$PWD\docs\screenshots\$Name")
 $g.Dispose()
 $bmp.Dispose()
 Write-Output "ventana capturada (oculta) $w x $hgt title='$($proc.MainWindowTitle)'"

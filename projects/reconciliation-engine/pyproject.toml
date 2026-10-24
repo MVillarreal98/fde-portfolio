@@ -4,18 +4,35 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reconciliation-engine"
-version = "1.0.0"
-description = "Cross-source financial reconciliation with deterministic anomaly rules"
+version = "2.0.0"
+description = "Cross-source financial reconciliation with deterministic anomaly rules (pandas or DuckDB SQL)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-dependencies = ["pandas>=2.0"]
+# requirements.txt mirrors this list (tests/test_packaging.py checks it).
+dependencies = [
+    "pandas>=2.3,<4",
+    "numpy>=1.26",
+    "tabulate>=0.9",
+    "duckdb>=1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.10",
+]
 
 [project.scripts]
 reconcile = "reconciliation.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+reconciliation = ["sql/*.sql"]
 
 [tool.ruff]
 line-length = 100
@@ -24,17 +41,26 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "I"]
 
+[tool.ruff.lint.isort]
+known-local-folder = ["conftest"]
+
 [tool.mypy]
 python_version = "3.10"
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = ["pandas.*", "pandas_stubs.*"]
+module = ["pandas.*", "duckdb.*", "tabulate.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Library deprecations (pandas 2 -> 3 drift) fail the suite instead of scrolling by.
+filterwarnings = ["error"]
 
 [tool.coverage.run]
-source = ["src/reconciliation"]
+source = ["reconciliation"]
 branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85

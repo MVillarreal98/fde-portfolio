@@ -59,14 +59,14 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <GroupBox Grid.Column="0" Header="Archivo de origen (primeras líneas)">
+            <GroupBox x:Name="PreviewGroup" Grid.Column="0" Header="Archivo de origen (primeras líneas)">
                 <TextBox x:Name="PreviewBox" FontFamily="Consolas" FontSize="12"
                          IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                          Background="#FAFAFA"/>
             </GroupBox>
             <GroupBox Grid.Column="1" Header="Diagnóstico (por línea)">
-                <TextBox x:Name="DiagnosticsBox" FontFamily="Consolas" FontSize="12"
-                         IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                <TextBox x:Name="DiagnosticsBox" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"
+                         IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                          Background="#FAFAFA" Foreground="#333"/>
             </GroupBox>
         </Grid>

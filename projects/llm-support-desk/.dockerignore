@@ -9,3 +9,6 @@ __pycache__/
 src/support_desk.egg-info/
 docs/screenshots/
 *.pyc
+.coverage
+htmlcov/
+*.db

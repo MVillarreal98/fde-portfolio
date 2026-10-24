@@ -10,10 +10,13 @@
     <RootNamespace>DocumentLayoutAutomator</RootNamespace>
   </PropertyGroup>
 
-  <!-- The xunit test project owns tests/; the app does not compile it. -->
+  <!-- The xunit test project owns tests/ and the console runner owns tools/;
+       the app does not compile either. -->
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
     <None Remove="tests/**/*.csproj" />
+    <Compile Remove="tools/**" />
+    <None Remove="tools/**" />
   </ItemGroup>
 
 </Project>

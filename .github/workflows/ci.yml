@@ -2,13 +2,29 @@ name: portfolio-ci
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "fix/**"]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   reconciliation-engine:
+    name: reconciliation-engine (${{ matrix.label }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: pandas-2
+            pandas: "pandas>=2.3,<3"
+          - label: pandas-3
+            pandas: "pandas>=3,<4"
     defaults:
       run:
         working-directory: projects/reconciliation-engine
@@ -17,8 +33,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt pytest
-      - run: python -m pytest tests -q
+          cache: pip
+          cache-dependency-path: projects/reconciliation-engine/pyproject.toml
+      - name: Install the package with dev extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" "${{ matrix.pandas }}"
+          python -c "import pandas, numpy, duckdb; print('pandas', pandas.__version__, '| numpy', numpy.__version__, '| duckdb', duckdb.__version__)"
+      - name: Lint and format
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Type check
+        run: mypy src
+      - name: Tests with coverage (gate and filterwarnings=error live in pyproject.toml)
+        run: python -m pytest -p no:cacheprovider --cov --cov-report=term
+      - name: Smoke - installed CLI reproduces sample_output
+        run: |
+          reconcile --ops data/ops_transactions.csv --billing data/billing_statements.csv --out "$RUNNER_TEMP/recon"
+          diff -r "$RUNNER_TEMP/recon" sample_output
+      - name: Smoke - SQL engine exits 2 when there are findings
+        run: |
+          set +e
+          reconcile --ops data/ops_transactions.csv --billing data/billing_statements.csv \
+            --out "$RUNNER_TEMP/recon-sql" --engine sql --fail-on-findings
+          code=$?
+          set -e
+          echo "exit code: $code"
+          test "$code" -eq 2
 
   llm-support-desk:
     runs-on: ubuntu-latest
@@ -30,11 +72,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest
-      - run: python -m pytest tests -q
+          cache: pip
+          cache-dependency-path: projects/llm-support-desk/requirements-dev.txt
+      - name: Install dev tooling (the runtime is stdlib-only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Format
+        run: ruff format --check .
+      - name: Lint
+        run: ruff check .
+      - name: Type check
+        run: mypy src
+      - name: Tests with coverage (no Ollama or network needed)
+        run: python -m pytest -q -p no:cacheprovider --cov=src/support_desk --cov-branch --cov-report=term --cov-fail-under=95
 
   file-layout-automator:
-    runs-on: windows-latest   # WPF targets net8.0-windows
+    runs-on: windows-latest   # the WPF app, the CLI and the tests target net8.0-windows
     defaults:
       run:
         working-directory: projects/file-layout-automator
@@ -43,4 +97,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
-      - run: dotnet test tests --nologo
+      - name: Build app, CLI and tests (warnings are errors)
+        run: dotnet build DocumentLayoutAutomator.sln --nologo -warnaserror
+      - name: Tests (engine, runner, golden sample_output)
+        run: dotnet test tests --nologo --no-build
+      - name: Smoke - CLI writes the layout for clean input (exit 0)
+        run: dotnet run --project tools/LayoutCli --no-build -- --profile deposit_guide --source data/sample_input_cleaned.csv --out "$env:RUNNER_TEMP/layout"
+      - name: Smoke - CLI rejects the planted bad rows and writes nothing (exit 1)
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "layout-rejected"
+          dotnet run --project tools/LayoutCli --no-build -- --profile deposit_guide --source data/sample_input.csv --out $out
+          $code = $LASTEXITCODE
+          Write-Output "exit code: $code"
+          if ($code -ne 1) { Write-Output "expected exit code 1"; exit 1 }
+          if (Test-Path (Join-Path $out "sample_input_deposit_guide.txt")) { Write-Output "a layout file was written"; exit 1 }
+          exit 0

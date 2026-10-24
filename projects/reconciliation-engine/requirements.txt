@@ -1,2 +1,6 @@
-pandas>=2.0
+# Runtime dependencies; mirrors [project].dependencies in pyproject.toml.
+# Preferred install: pip install -e ".[dev]"
+pandas>=2.3,<4
+numpy>=1.26
 tabulate>=0.9
+duckdb>=1.1

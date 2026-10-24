@@ -1,0 +1,2 @@
+source,row_number,transaction_ref,statement_id,raw_amount,parsed_amount,reason
+billing,27,,S027,500.00,500.00,missing transaction_ref

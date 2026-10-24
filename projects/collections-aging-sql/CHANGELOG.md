@@ -34,10 +34,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CLI (`collections-aging`) with `--invoices`, `--payments`, `--out`,
   `--as-of`, `--fail-on-findings` (exit 2 for schedulers), `--log-level`,
   `--version`.
-- Demo data with every aging boundary planted on purpose (1, 3, 10, 30, 45,
-  46, 58, 76, 91, 97 days past due) plus the invalid row that exercises each
+- Demo data with open invoices in every aging bucket (1, 3, 10, 30, 45, 46,
+  58, 76, 91, 97 days past due) plus the invalid row that exercises each
   rejection reason (documented in `data/Dictionary.md`).
-- Deterministic outputs (fixed sort order, `\n` line endings, cents shown as
-  exact decimals); the committed `sample_output/` is what the CLI produces.
+- Deterministic outputs (fixed sort order, `\n` line endings in the CSV files,
+  cents shown as exact decimals); the committed `sample_output/` is what the
+  CLI produces.
 - Tests: golden tests that diff `sample_output/` against a fresh run, rule
   tests with fixture CSVs, CLI exit-code tests and packaging tests.

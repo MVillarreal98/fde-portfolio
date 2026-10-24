@@ -94,4 +94,6 @@ Every defect below has a regression test (`tests/test_regression_probes.py`).
 - Executive Markdown report plus per-rule CSV exports
 - Schema-validated CSV ingestion with fail-fast behavior
 - Unit tests for the duplicate-settlement, mismatch and orphan rules
-- Packaging: console script `reconcile`; dev tooling (ruff, mypy, pre-commit)
+- Packaging (added in 6ce9fc7, after the `reconciliation-engine-v1.0.0` tag;
+  the tagged commit does not contain it): console script `reconcile`; dev
+  tooling (ruff, mypy, pre-commit)

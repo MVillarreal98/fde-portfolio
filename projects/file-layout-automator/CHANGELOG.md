@@ -68,4 +68,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and Carrier ASN (per-store packing totals)
 - Fail-closed run: no artifact is generated while any row is rejected
 - Five xunit tests covering padding, defaults, required/regex/overflow
-- Packaging: solution file, .editorconfig; dev tooling (Coverlet coverage)
+- Packaging (added in 6ce9fc7, after the `layout-automator-v1.0.0` tag; the
+  tagged commit does not contain it): solution file, .editorconfig; dev
+  tooling (Coverlet coverage)

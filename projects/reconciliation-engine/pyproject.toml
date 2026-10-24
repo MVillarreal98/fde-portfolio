@@ -7,14 +7,14 @@ name = "reconciliation-engine"
 version = "2.0.0"
 description = "Cross-source financial reconciliation with deterministic anomaly rules (pandas or DuckDB SQL)"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 # requirements.txt mirrors this list (tests/test_packaging.py checks it).
 dependencies = [
     "pandas>=2.3,<4",
     "numpy>=1.26",
     "tabulate>=0.9",
-    "duckdb>=1.1",
+    "duckdb>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -37,7 +37,7 @@ reconciliation = ["sql/*.sql"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "I"]
@@ -46,7 +46,7 @@ select = ["E", "F", "W", "B", "UP", "I"]
 known-local-folder = ["conftest"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]

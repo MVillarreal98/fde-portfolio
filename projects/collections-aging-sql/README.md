@@ -137,9 +137,10 @@ schedulers) · `1` unreadable inputs or a failed conservation check.
 - Dunning and aging thresholds (3/15/35/60 days; buckets 30/60/90) are
   constants of this demo's policy, stated in the SQL, not configuration.
 - Money is integer cents; there is no currency or FX column.
-- Amount parsing is `TRY_CAST(... AS BIGINT)`, which rejects `abc` and
-  `1,500` but rounds `1500.50` to 1,501 and accepts `1e3` and `1_000`. A file
-  with amounts in pesos instead of cents is not caught.
+- Amount parsing first demands an integer literal (`-?[0-9]+`): `abc`,
+  `1,500`, `1500.50`, `1e3` and `1_000` are all rejected with the raw text in
+  `rejected_rows.csv`. A file with pesos instead of cents still looks valid
+  (it *is* integers) - that is not detectable from the file alone.
 - Repeated `invoice_id` or `payment_id` values are not rejected. A payment
   exported twice is applied twice (it can close an invoice that still owes
   money and is not listed as a duplicate candidate); a repeated invoice is

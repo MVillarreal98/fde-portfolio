@@ -38,7 +38,11 @@ SELECT
     CASE
         WHEN invoice_id IS NULL OR trim(invoice_id) = '' THEN 'blank_invoice_id'
         WHEN amount_raw IS NULL OR trim(amount_raw) = '' THEN 'blank_amount'
-        WHEN amount_cents IS NULL THEN 'unparseable_amount'
+        -- 'unparseable_amount' = the text is not an integer literal: covers
+        -- 'abc', decimals ('1500.50' -> TryCast would round to 1501 cents,
+        -- a 100x error), exponent and underscore notation ('1e3', '1_000').
+        WHEN NOT regexp_full_match(COALESCE(trim(amount_raw), ''), '-?[0-9]+')
+            THEN 'unparseable_amount'
         WHEN amount_cents < 0 THEN 'negative_amount'
         WHEN issued_raw IS NULL OR trim(issued_raw) = '' THEN 'blank_issued_date'
         WHEN issued_date IS NULL THEN 'unparseable_issued_date'
@@ -50,7 +54,8 @@ FROM parsed_invoices
 WHERE CASE
         WHEN invoice_id IS NULL OR trim(invoice_id) = '' THEN 'blank_invoice_id'
         WHEN amount_raw IS NULL OR trim(amount_raw) = '' THEN 'blank_amount'
-        WHEN amount_cents IS NULL THEN 'unparseable_amount'
+        WHEN NOT regexp_full_match(COALESCE(trim(amount_raw), ''), '-?[0-9]+')
+            THEN 'unparseable_amount'
         WHEN amount_cents < 0 THEN 'negative_amount'
         WHEN issued_raw IS NULL OR trim(issued_raw) = '' THEN 'blank_issued_date'
         WHEN issued_date IS NULL THEN 'unparseable_issued_date'
@@ -122,7 +127,10 @@ SELECT
     CASE
         WHEN payment_id IS NULL OR trim(payment_id) = '' THEN 'blank_payment_id'
         WHEN amount_raw IS NULL OR trim(amount_raw) = '' THEN 'blank_amount'
-        WHEN amount_cents IS NULL THEN 'unparseable_amount'
+        -- Same integer-literal guard as the invoice side: decimals would be
+        -- rounded by the BIGINT cast with no trace.
+        WHEN NOT regexp_full_match(COALESCE(trim(amount_raw), ''), '-?[0-9]+')
+            THEN 'unparseable_amount'
         WHEN amount_cents < 0 THEN 'negative_amount'
         WHEN invoice_id IS NULL OR trim(invoice_id) = '' THEN 'blank_invoice_ref'
         WHEN paid_raw IS NULL OR trim(paid_raw) = '' THEN 'blank_paid_date'
@@ -133,7 +141,8 @@ FROM parsed_payments
 WHERE CASE
         WHEN payment_id IS NULL OR trim(payment_id) = '' THEN 'blank_payment_id'
         WHEN amount_raw IS NULL OR trim(amount_raw) = '' THEN 'blank_amount'
-        WHEN amount_cents IS NULL THEN 'unparseable_amount'
+        WHEN NOT regexp_full_match(COALESCE(trim(amount_raw), ''), '-?[0-9]+')
+            THEN 'unparseable_amount'
         WHEN amount_cents < 0 THEN 'negative_amount'
         WHEN invoice_id IS NULL OR trim(invoice_id) = '' THEN 'blank_invoice_ref'
         WHEN paid_raw IS NULL OR trim(paid_raw) = '' THEN 'blank_paid_date'

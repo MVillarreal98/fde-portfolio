@@ -64,6 +64,7 @@ class RunResult:
     applied_cents: int = 0
     unapplied_cents: int = 0
     outstanding_cents: int = 0
+    orphan_cents: int = 0
     findings: list[Finding] = field(default_factory=list)
     files: dict[str, int] = field(default_factory=dict)
 
@@ -166,6 +167,34 @@ def _check_conservation(con: duckdb.DuckDBPyConnection, result: RunResult) -> No
     ).fetchone()
     assert unapplied is not None
     result.unapplied_cents = int(unapplied[0])
+
+    # Payments-side identity — the check that actually catches a join
+    # fan-out (e.g. duplicated invoices) and orphan cash: every payment
+    # cent must land in exactly one bucket.
+    #
+    #   SUM(payments) = SUM(applied) + SUM(unapplied surplus) + orphan
+    #
+    # Orphans here means payments whose invoice_id does not exist in the
+    # clean pool (never existed or was rejected at staging).
+    cash = con.execute(
+        """
+        SELECT
+            (SELECT COALESCE(SUM(amount_cents), 0) FROM t_payments),
+            (SELECT COALESCE(SUM(amount_cents), 0)
+             FROM t_payments p
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM t_invoices i WHERE i.invoice_id = p.invoice_id
+             ))
+        """
+    ).fetchone()
+    assert cash is not None
+    payments_total, orphan_cents = cash
+    if payments_total != applied + unapplied[0] + int(orphan_cents):
+        raise ConservationIntegrityError(
+            f"payments cents ({payments_total}) != applied ({applied})"
+            f" + unapplied ({unapplied[0]}) + orphan ({orphan_cents})"
+        )
+    result.orphan_cents = int(orphan_cents)
 
 
 def _collect_findings(con: duckdb.DuckDBPyConnection, result: RunResult) -> None:
@@ -271,10 +300,13 @@ def _build_report(result: RunResult) -> str:
         f" {cents_to_decimal_str(result.applied_cents)} |",
         f"| cash above invoice totals (unapplied) | {result.unapplied_cents:,} |"
         f" {cents_to_decimal_str(result.unapplied_cents)} |",
+        f"| payments without a valid invoice (orphan) | {result.orphan_cents:,} |"
+        f" {cents_to_decimal_str(result.orphan_cents)} |",
         f"| outstanding | {result.outstanding_cents:,} |"
         f" {cents_to_decimal_str(result.outstanding_cents)} |",
         "",
-        "Conservation check: invoiced = applied + outstanding — passed.",
+        "Conservation checks (invoiced = applied + outstanding, and every",
+        "payment cent = applied + unapplied + orphan): passed.",
         "",
         "## Findings (by code)",
         "",

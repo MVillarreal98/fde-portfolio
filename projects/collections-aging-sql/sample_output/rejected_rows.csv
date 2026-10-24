@@ -1,0 +1,9 @@
+source,reference,line_no,reason
+invoice,INV-900,18,unparseable_amount
+invoice,INV-901,19,negative_amount
+invoice,INV-902,20,blank_due_date
+invoice,INV-903,21,due_before_issue
+payment,PAY-901,11,blank_invoice_ref
+payment,PAY-902,12,unparseable_payment_date
+payment,PAY-903,13,negative_amount
+payment,PAY-904,14,future_payment

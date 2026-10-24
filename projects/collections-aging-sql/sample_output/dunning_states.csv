@@ -1,0 +1,15 @@
+invoice_id,customer_id,days_past_due,outstanding_cents,stage,next_action_date
+INV-014,C003,97,1550.00,D60_collections,
+INV-004,C002,91,990.00,D60_collections,
+INV-003,C002,76,402.50,D60_collections,
+INV-012,C004,58,340.75,D35_final_notice,2026-10-02
+INV-017,C004,46,253.00,D35_final_notice,2026-10-14
+INV-009,C002,45,300.00,D35_final_notice,2026-10-15
+INV-005,C003,30,1007.50,D15_second_notice,2026-10-05
+INV-002,C001,10,1800.00,D3_reminder,2026-10-05
+INV-007,C005,3,615.00,D3_reminder,2026-10-12
+INV-015,C001,1,500.00,pre_dunning,2026-10-02
+INV-001,C001,0,2895.00,pre_dunning,2026-10-08
+INV-008,C005,0,123.00,pre_dunning,2026-10-18
+INV-011,C003,0,456.00,pre_dunning,2026-10-06
+INV-016,C005,0,274.00,pre_dunning,2026-10-03

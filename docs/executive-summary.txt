@@ -19,16 +19,18 @@ PROJECTS: PROBLEM -> ROOT CAUSE -> SOLUTION -> EVIDENCE
 -------------------------------------------------------
 
 1) RECONCILIATION ENGINE (PYTHON, PANDAS, DUCKDB SQL)
-   Problem and root cause: A ledger and a settlement file disagree. Lookups do
-   not aggregate per reference, IDs are read as numbers and malformed amounts
-   are dropped silently.
+   Problem and root cause: A ledger and a settlement file disagree. Failure
+   modes it guards against (several were found in its own v1.0.0): lookups
+   that do not aggregate per reference, IDs read as numbers and malformed
+   amounts dropped silently.
    Solution: Text-only ingestion, money as integer cents, one-to-one join per
    reference with one status each, 7 rules, rejected-rows file, conservation
    checks, exit codes for schedulers. The same rules run in pandas and in
    DuckDB SQL.
    Evidence (synthetic data): 171 tests, 100% statement and branch coverage on
    pandas 2.3.3 and 3.1.0. Parity tests cover both engines. 1M rows per side:
-   full run in 12.7 s (pandas) or 11.1 s (SQL) on one desktop machine.
+   full run in 12.7 s (pandas) or 11.1 s (SQL), a single run on one desktop
+   machine.
 
 2) LLM SUPPORT DESK (PYTHON, OLLAMA, SQLITE, DOCKER)
    Problem and root cause: Free-text payment claims need decisions that follow
@@ -90,5 +92,5 @@ HOW IT WAS BUILT
 Built with the help of AI coding tools. Each project's README documents its
 design decisions, how it is tested and its known limitations.
 
-(Generated from docs/executive-summary.md: plain-text version for email and
-ATS attachments.)
+(Generated from docs/executive-summary.md by docs/build_summary.py: plain-text
+version for email and ATS attachments.)

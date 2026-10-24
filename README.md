@@ -5,10 +5,11 @@
 [![portfolio-ci](https://github.com/MVillarreal98/fde-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/MVillarreal98/fde-portfolio/actions/workflows/ci.yml)
 [![docker-suite](https://github.com/MVillarreal98/fde-portfolio/actions/workflows/docker.yml/badge.svg)](https://github.com/MVillarreal98/fde-portfolio/actions/workflows/docker.yml)
 
-Three self-contained projects built around problems that come up in billing and
+Four self-contained projects built around problems that come up in billing and
 payment operations: two money records that should agree and do not, free-text
-customer claims that need a decision that follows policy, and files that must
-match a rigid layout down to the character.
+customer claims that need a decision that follows policy, files that must
+match a rigid layout down to the character, and a collections sheet where
+every open invoice must age and escalate on schedule.
 
 > **Status, plainly.** These are portfolio demos. Every dataset in this
 > repository is synthetic and was written for the demos. No project has users or
@@ -20,9 +21,10 @@ match a rigid layout down to the character.
 
 | Project | Stack | What it does | Evidence in the repo |
 |---|---|---|---|
-| **[Reconciliation Engine](projects/reconciliation-engine/)** | Python · pandas · DuckDB SQL | Reconciles an operations ledger against a settlement file. Each reference gets exactly one status, 7 rules explain the differences, unusable rows go to `rejected_rows.csv`, and conservation checks stop the run if the totals do not add up. The same rules run in pandas and in SQL. | 171 pytest tests with 100% statement and branch coverage on pandas 2.3.3 and 3.1.0. Parity tests require identical findings from both engines. A full run on 1,000,000 synthetic rows per side takes 12.7 s (pandas) or 11.1 s (SQL) on one desktop machine. |
+| **[Reconciliation Engine](projects/reconciliation-engine/)** | Python · pandas · DuckDB SQL | Reconciles an operations ledger against a settlement file. Each reference gets exactly one status, 7 rules explain the differences, unusable rows go to `rejected_rows.csv`, and conservation checks stop the run if the totals do not add up. The same rules run in pandas and in SQL. | 171 pytest tests with 100% statement and branch coverage on pandas 2.3.3 and 3.1.0. Parity tests require identical findings from both engines. A full run on 1,000,000 synthetic rows per side took 12.7 s (pandas) or 11.1 s (SQL) in a single run on one desktop machine. |
 | **[LLM Support Desk](projects/llm-support-desk/)** | Python (stdlib) · Ollama `llama3.2:1b` · SQLite · Docker | Triages payment claims. A local LLM proposes a category and severity; deterministic rules decide the action and can only escalate. Every decision is stored in SQLite with the prompt hash, the model and the rules that fired. | 133 pytest tests with 99% line and branch coverage, including prompt-injection tests against a fake model that obeys the injection. Offline eval on 23 labeled synthetic tickets: category agreement 13/23 for `llama3.2:1b` and 21/23 for the keyword fallback; 9 of the 10 tickets that must reach a human were escalated on the LLM path. |
 | **[Document Layout Automator](projects/file-layout-automator/)** | C# · .NET 8 · WPF + console CLI | Turns CSV rows into fixed-width layout files. It rejects a value instead of truncating it, reports line, field and reason, and writes nothing while any row fails. The desktop app and the CLI share one runner. | 38 xunit tests, including golden tests that compare the committed `sample_output/` with the engine's output. `dotnet build -warnaserror` passes with 0 warnings. |
+| **[Collections Aging SQL](projects/collections-aging-sql/)** | DuckDB SQL · thin Python harness | Ages every open invoice from the policy due date, assigns one escalating dunning stage, applies cash FIFO so surplus is unapplied and cannot read as money owed, and lists duplicate-payment candidate pairs. Unusable rows land in `rejected_rows.csv` with a reason, and the run stops if invoiced ≠ applied + outstanding. | 33 pytest tests, including golden tests that diff all seven committed output files against a fresh run (LF everywhere: the report matches on Windows too). Ruff, mypy and an 85% branch-coverage gate pass, and the installed CLI reproduces `sample_output/` byte for byte. |
 
 ## Problem → root cause → solution → how it would be measured
 
@@ -36,7 +38,7 @@ match a rigid layout down to the character.
   reference, IDs read as numbers (`00123` becomes `123`), amounts that fail to
   parse without warning (`1,250.00`), and one problem counted under two rules.
   The 16 edge cases found when reviewing v1.0.0 of this project are now
-  regression tests on both engines.
+  regression tests: 15 run on both engines and one checks option validation.
 - **Solution.** Every column is read as text and money as integer cents.
   Each side is aggregated per reference and joined one-to-one, and each
   reference gets one status by precedence. Seven rules explain the differences.
@@ -90,8 +92,48 @@ match a rigid layout down to the character.
   compared with the manual process. None has been measured: both layout specs
   and all data are synthetic.
 
+### Collections Aging SQL
+
+- **Problem.** An open-invoice sheet has to say, per invoice, how much is still
+  owed, how late it is, which reminder or final notice must go out, and
+  whether that "double payment" is the same charge paid twice.
+- **Root causes it is built around.** Amounts parsed loosely (an unparseable
+  amount vanishing from the aging without a trace), cash applied out of order
+  (surplus over the invoice total being read as money still owed), aging
+  counted from the issue date instead of the due date, rejected rows
+  disappearing between tools, and a duplicate rule that flags every pair in
+  the book.
+- **Solution.** Two CSVs go through one staging pass that reads everything as
+  text and casts with `TRY_CAST`; unusable rows land in `rejected_rows.csv`
+  with the first problem that hit them. Payments are applied FIFO in SQL and
+  each applies only up to what the invoice owed; the surplus is unapplied cash
+  in its own column. Buckets count days past the **due date** (current,
+  1-30, 31-60, 61-90, 91-plus) and dunning stages only escalate
+  (pre_dunning → D3 → D15 → D35 → D60). Duplicate candidates are pairs (same
+  customer, same amount, ≤ 7 days) for a reviewer. Before any report is
+  written, the runner checks two identities (rows and cents) and stops with
+  exit 1 if either fails; `--fail-on-findings` returns exit 2 for schedulers.
+  The row identity holds by construction and is kept as a regression guard;
+  the cents identity catches over-application. The project README lists what
+  the staging does not catch yet.
+- **How it would be measured.** On real files, the measures would be: the
+  share of open invoices aged automatically, dunning letters sent on the
+  correct day, duplicate candidates confirmed over dismissed, and time from
+  file arrival to a distributed call sheet. None of these has been measured,
+  because there is no real data here.
+
 ## SQL in this repository
 
+- **DuckDB** ([`projects/collections-aging-sql/src/aging_sql/sql/`](projects/collections-aging-sql/src/aging_sql/sql/)):
+  `staging.sql` reads every column as text, casts with `TRY_CAST` and sends
+  unusable rows to `rejected_rows.csv` through an ordered `CASE` (first
+  problem wins). `t_applied` applies cash FIFO with a running
+  `sum() OVER (PARTITION BY invoice_id ORDER BY paid_date, payment_id)` capped
+  by what the invoice owed; `aging_buckets.sql` and `dunning_states.sql` read
+  a `SET VARIABLE as_of` reference date, `duplicate_payment_candidates.sql`
+  self-joins customer + amount + window, and `monthly_collections.sql` runs
+  `LAG()` over an aggregated month per method. The runner checks the row and
+  the cents identity before writing anything.
 - **DuckDB** ([`reconciliation-engine/src/reconciliation/sql/`](projects/reconciliation-engine/src/reconciliation/sql/)):
   `matched.sql` aggregates each side with CTEs, spots repeated amounts with
   `count(*) OVER (PARTITION BY ...)`, joins with `FULL OUTER JOIN` and assigns
@@ -113,6 +155,10 @@ match a rigid layout down to the character.
     installed `reconcile` command must reproduce `sample_output/`, and the SQL
     engine must exit with code 2 when there are findings.
   - llm-support-desk: ruff, mypy and pytest with a 95% coverage gate.
+  - collections-aging-sql: ruff, mypy and pytest with an 85% branch-coverage
+    gate, and two smoke checks. The installed `collections-aging` command must
+    reproduce `sample_output/`, and under `--fail-on-findings` it must exit
+    with code 2 while findings exist.
   - file-layout-automator, on Windows: `dotnet build -warnaserror`,
     `dotnet test`, and a CLI smoke check (exit 0 on clean input; exit 1 and no
     file written on the planted bad rows).
@@ -144,30 +190,31 @@ CHANGELOG records what changed between versions.
 
 ## Quick review
 
-Tested on Python 3.12 and the .NET 8 SDK on Windows. The Python packages
-declare Python 3.10+.
+Tested on Python 3.12 (the only Python version CI runs) and the .NET 8 SDK
+on Windows. Run each block from the repository root; the subshells keep the
+`cd` local to its project.
 
 ```bash
 # Reconciliation Engine
-cd projects/reconciliation-engine
-pip install -e ".[dev]" && pytest && python run_reconciliation.py
+(cd projects/reconciliation-engine && pip install -e ".[dev]" && pytest && python run_reconciliation.py)
 
 # LLM Support Desk (stdlib runtime; Ollama is optional, the keyword fallback runs without it)
-cd projects/llm-support-desk
-pip install -e ".[dev]" && python -m pytest -q -p no:cacheprovider && support-desk eval --mode fallback
+(cd projects/llm-support-desk && pip install -e ".[dev]" && python -m pytest -q -p no:cacheprovider && support-desk eval --mode fallback)
 
 # LLM Support Desk — one-command full deployment (start Ollama, pull the model, run the desk)
-cd projects/llm-support-desk
-docker compose up --build          # UI at http://localhost:8000
+(cd projects/llm-support-desk && docker compose up --build)   # UI at http://localhost:8000
 
 # Document Layout Automator (Windows)
-cd projects/file-layout-automator
-dotnet build DocumentLayoutAutomator.sln && dotnet test tests
+(cd projects/file-layout-automator && dotnet build DocumentLayoutAutomator.sln && dotnet test tests)
+
+# Collections Aging SQL
+(cd projects/collections-aging-sql && pip install -e ".[dev]" && pytest && python run_collections_aging.py)
 ```
 
-You can review each project without building it. The reconciliation and
-layout projects commit their real demo output under `sample_output/`, and all
-three commit screenshots taken from the current code.
+You can review each project without building it. The reconciliation,
+collections-aging and layout projects commit their real demo output under
+`sample_output/`, and the reconciliation, support-desk and layout projects
+commit screenshots taken from the current code.
 
 ## Layout
 
@@ -175,7 +222,8 @@ three commit screenshots taken from the current code.
 projects/reconciliation-engine/   Python · pandas · DuckDB SQL
 projects/llm-support-desk/        Python · Ollama · SQLite · Docker
 projects/file-layout-automator/   C# · .NET 8 · WPF + CLI
-docs/executive-summary.md         one-page summary (.txt, .html and .pdf are generated from it)
+projects/collections-aging-sql/   DuckDB SQL · thin Python harness
+docs/executive-summary.md         one-page summary (docs/build_summary.py generates the .txt and .html; the .pdf is printed from the .html)
 .github/workflows/                CI and Docker workflows
 ```
 

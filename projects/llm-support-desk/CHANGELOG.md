@@ -4,7 +4,7 @@ All notable changes to the LLM Support Desk are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.2.0] - 2026-10-22
-Fixes for the defects found in an external code review, each covered by a test.
+Fixes for the defects found in a code review (AI-assisted), each covered by a test.
 
 ### Security
 - Operator UI no longer uses `innerHTML`: every value is rendered with
@@ -78,4 +78,6 @@ Fixes for the defects found in an external code review, each covered by a test.
   unauthorized-charge severity override
 - Auditable keyword fallback classifier for LLM-downtime continuity
 - Unit tests with fake-LLM injection (no inference needed)
-- Packaging: console script `support-desk`; dev tooling (ruff, mypy, pre-commit)
+- Packaging (added in 6ce9fc7, after the `support-desk-v1.0.0` tag; the
+  tagged commit does not contain it): console script `support-desk`; dev
+  tooling (ruff, mypy, pre-commit)

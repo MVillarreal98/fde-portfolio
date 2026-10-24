@@ -1,0 +1,2 @@
+payment_id_a,payment_id_b,customer_id,amount_cents,paid_date_a,paid_date_b,days_apart
+PAY-002,PAY-003,C004,750.00,2026-09-10,2026-09-10,0

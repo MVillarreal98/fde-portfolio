@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPhone vs Galaxy en Monterrey</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+  :root {
+    --surface: #fcfcfb; --panel: #ffffff; --ink: #1d1d1b; --ink-2: #55554f;
+    --muted: #85857e; --line: #e4e3df; --accent: #2a78d6; --mid: #f0efec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #1a1a19; --panel: #232322; --ink: #f2f1ee; --ink-2: #c4c3bd;
+      --muted: #8e8d87; --line: #3a3a37; --accent: #3987e5; --mid: #383835;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .sub { color: var(--ink-2); margin: 0 0 20px; max-width: 70ch; }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+          padding: 10px 14px; min-width: 150px; }
+  .stat b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+             justify-content: space-between; margin-bottom: 10px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px;
+         overflow: hidden; background: var(--panel); }
+  .seg button { border: 0; background: none; color: var(--ink-2); padding: 7px 14px;
+                font: inherit; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .legend { display: flex; align-items: center; gap: 8px; color: var(--ink-2);
+            font-size: .85rem; font-variant-numeric: tabular-nums; }
+  .legend .bar { width: 160px; height: 10px; border-radius: 5px; }
+  #map { height: 560px; border-radius: 12px; border: 1px solid var(--line);
+         background: var(--panel); }
+  .leaflet-tooltip { font: 13px/1.4 system-ui, sans-serif; }
+  .tt b { font-size: 14px; }
+  .note { color: var(--muted); font-size: .85rem; margin-top: 8px; }
+  details { margin-top: 24px; }
+  summary { cursor: pointer; color: var(--ink-2); }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px;
+          font-variant-numeric: tabular-nums; font-size: .9rem; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-2); font-weight: 600; }
+  td.n, th.n { text-align: right; }
+  @media (max-width: 600px) { #map { height: 420px; } h1 { font-size: 1.3rem; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>iPhone vs Samsung Galaxy en la ZM de Monterrey</h1>
+  <p class="sub">Porcentaje de búsquedas de iPhone dentro del par iPhone + Galaxy
+  (Google Trends, temas) por localidad, 2020 y 2025. Es <strong>interés de
+  búsqueda</strong>, no número de usuarios. Cada círculo es una localidad del
+  INEGI; su tamaño es la población (Censo 2020).</p>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Vista del mapa">
+      <button data-view="2020">2020</button>
+      <button data-view="2025">2025</button>
+      <button data-view="delta">Cambio 2020 → 2025</button>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div id="map" role="img" aria-label="Mapa de la zona metropolitana de Monterrey"></div>
+  <p class="note" id="note"></p>
+
+  <details>
+    <summary>Ver los datos en tabla</summary>
+    <div class="table-wrap"><table id="tabla"></table></div>
+  </details>
+  <p class="note" id="fuentes"></p>
+</main>
+<script>
+const DATA = {"localidades": [{"nom_loc": "Santiago", "nom_mun": "Santiago", "lat": 25.427100000000003, "lon": -100.15301111111111, "pob": 43019, "internet": 68.0, "s2020": 82.0, "s2025": 88.0, "delta": 6.0}, {"nom_loc": "San Nicolás de los Garza", "nom_mun": "San Nicolás de los Garza", "lat": 25.755252777777777, "lon": -100.2895861111111, "pob": 412199, "internet": 83.1, "s2020": 85.0, "s2025": 87.0, "delta": 2.0}, {"nom_loc": "Pueblo Nuevo (Tepehuaje)", "nom_mun": "Cadereyta Jiménez", "lat": 25.487244166666667, "lon": -99.76395833333333, "pob": 870, "internet": 40.2, "s2020": 86.0, "s2025": 88.0, "delta": 2.0}, {"nom_loc": "San Pedro Garza García", "nom_mun": "San Pedro Garza García", "lat": 25.665169444444444, "lon": -100.40246666666667, "pob": 132128, "internet": 86.9, "s2020": 86.0, "s2025": 91.0, "delta": 5.0}, {"nom_loc": "Cadereyta Jiménez", "nom_mun": "Cadereyta Jiménez", "lat": 25.59100833333333, "lon": -100.00159444444445, "pob": 75721, "internet": 59.8, "s2020": 81.0, "s2025": 84.0, "delta": 3.0}, {"nom_loc": "Salinas Victoria", "nom_mun": "Salinas Victoria", "lat": 25.959566666666667, "lon": -100.29150555555556, "pob": 13059, "internet": 46.7, "s2020": 77.0, "s2025": 90.0, "delta": 13.0}, {"nom_loc": "Monterrey", "nom_mun": "Monterrey", "lat": 25.66469722222222, "lon": -100.31089166666666, "pob": 1142952, "internet": 77.6, "s2020": 85.0, "s2025": 89.0, "delta": 4.0}, {"nom_loc": "Guadalupe", "nom_mun": "Guadalupe", "lat": 25.677325, "lon": -100.25989722222222, "pob": 635862, "internet": 77.8, "s2020": 82.0, "s2025": 88.0, "delta": 6.0}, {"nom_loc": "Ciudad Santa Catarina", "nom_mun": "Santa Catarina", "lat": 25.67436388888889, "lon": -100.46174722222223, "pob": 304052, "internet": 76.3, "s2020": 81.0, "s2025": 86.0, "delta": 5.0}, {"nom_loc": "Parque Industrial Ciudad Mitras", "nom_mun": "García", "lat": 25.79123388888889, "lon": -100.44028916666667, "pob": 41487, "internet": 67.0, "s2020": 78.0, "s2025": 84.0, "delta": 6.0}, {"nom_loc": "Ciudad General Escobedo", "nom_mun": "General Escobedo", "lat": 25.807986111111113, "lon": -100.32264166666667, "pob": 454967, "internet": 71.6, "s2020": 79.0, "s2025": 87.0, "delta": 8.0}, {"nom_loc": "Ciudad Apodaca", "nom_mun": "Apodaca", "lat": 25.781294444444445, "lon": -100.18922777777779, "pob": 536436, "internet": 81.5, "s2020": 80.0, "s2025": 87.0, "delta": 7.0}, {"nom_loc": "Mitras Poniente", "nom_mun": "García", "lat": 25.781475555555556, "lon": -100.43048083333333, "pob": 53461, "internet": 95.4, "s2020": 83.0, "s2025": 88.0, "delta": 5.0}, {"nom_loc": "Ladrillera (Entronque Pesquería)", "nom_mun": "Pesquería", "lat": 25.799465, "lon": -100.09631166666667, "pob": 10178, "internet": 44.5, "s2020": 80.0, "s2025": 86.0, "delta": 6.0}, {"nom_loc": "Ciudad Benito Juárez", "nom_mun": "Juárez", "lat": 25.646225, "lon": -100.09088055555556, "pob": 308285, "internet": 60.4, "s2020": 77.0, "s2025": 85.0, "delta": 8.0}, {"nom_loc": "Arboledas de San Roque", "nom_mun": "Juárez", "lat": 25.611061111111113, "lon": -100.14433611111112, "pob": 47155, "internet": 55.2, "s2020": 77.0, "s2025": 83.0, "delta": 6.0}, {"nom_loc": "Jardines de la Silla (Jardines)", "nom_mun": "Juárez", "lat": 25.634891666666665, "lon": -100.18120777777779, "pob": 75426, "internet": 70.2, "s2020": 76.0, "s2025": 86.0, "delta": 10.0}, {"nom_loc": "General Zuazua", "nom_mun": "General Zuazua", "lat": 25.896977777777778, "lon": -100.10824722222222, "pob": 9934, "internet": 40.6, "s2020": 72.0, "s2025": 85.0, "delta": 13.0}, {"nom_loc": "Ciénega de Flores", "nom_mun": "Ciénega de Flores", "lat": 25.952069444444444, "lon": -100.16810833333334, "pob": 30217, "internet": 53.7, "s2020": 70.0, "s2025": 83.0, "delta": 13.0}, {"nom_loc": "Carmen", "nom_mun": "El Carmen", "lat": 25.93222777777778, "lon": -100.36412222222222, "pob": 11583, "internet": 57.3, "s2020": 70.0, "s2025": 85.0, "delta": 15.0}, {"nom_loc": "García", "nom_mun": "García", "lat": 25.800491666666666, "lon": -100.58546944444444, "pob": 234698, "internet": 51.6, "s2020": 71.0, "s2025": 84.0, "delta": 13.0}, {"nom_loc": "Pesquería", "nom_mun": "Pesquería", "lat": 25.783258333333333, "lon": -100.05367777777778, "pob": 48069, "internet": 52.0, "s2020": 68.0, "s2025": 77.0, "delta": 9.0}, {"nom_loc": "Unión Agropecuarios Lázaro Cárdenas del Norte", "nom_mun": "General Escobedo", "lat": 25.832221944444445, "lon": -100.38436638888889, "pob": 1397, "internet": 23.2, "s2020": null, "s2025": 86.0, "delta": null}, {"nom_loc": "Santa Rosa", "nom_mun": "Apodaca", "lat": 25.822791666666667, "lon": -100.22111666666667, "pob": 21180, "internet": 78.8, "s2020": null, "s2025": 86.0, "delta": null}, {"nom_loc": "Ex-Hacienda Santa Rosa", "nom_mun": "Apodaca", "lat": 25.79626388888889, "lon": -100.21485555555556, "pob": 22464, "internet": 87.0, "s2020": null, "s2025": 87.0, "delta": null}, {"nom_loc": "Agua Fría", "nom_mun": "Apodaca", "lat": 25.813128055555556, "lon": -100.15153472222222, "pob": 1787, "internet": 75.5, "s2020": null, "s2025": 84.0, "delta": null}, {"nom_loc": "Fraccionamiento Real Palmas", "nom_mun": "General Zuazua", "lat": 25.898152777777778, "lon": -100.16814722222223, "pob": 40259, "internet": 65.8, "s2020": null, "s2025": 83.0, "delta": null}, {"nom_loc": "Emiliano Zapata", "nom_mun": "Salinas Victoria", "lat": 25.9046, "lon": -100.27789166666666, "pob": 6309, "internet": 28.0, "s2020": null, "s2025": 81.0, "delta": null}, {"nom_loc": "Simeprodeso (Colectivo Nuevo)", "nom_mun": "Salinas Victoria", "lat": 25.854480555555558, "lon": -100.29830833333334, "pob": 2764, "internet": 47.8, "s2020": null, "s2025": 83.0, "delta": null}, {"nom_loc": "Villas Campestres", "nom_mun": "Ciénega de Flores", "lat": 25.921389444444447, "lon": -100.21821805555555, "pob": 247, "internet": 42.3, "s2020": null, "s2025": 83.0, "delta": null}, {"nom_loc": "Francisco Villa", "nom_mun": "Pesquería", "lat": 25.707305277777778, "lon": -99.99723722222222, "pob": 326, "internet": 15.2, "s2020": null, "s2025": 81.0, "delta": null}, {"nom_loc": "Entronque Laredo-Salinas Victoria", "nom_mun": "Apodaca", "lat": 25.85607166666667, "lon": -100.249545, "pob": 7262, "internet": 73.5, "s2020": null, "s2025": 84.0, "delta": null}], "resumen": {"2020": 81.2, "2025": 87.1}, "fuentes": [{"source": "inegi_iter", "file_name": "iter_19_cpv2020_csv_2026-10-23.zip", "retrieved_at": "2026-10-23"}, {"source": "google_trends", "file_name": "trends_nl_localidad_2020_2026-10-23.csv", "retrieved_at": "2026-10-23"}, {"source": "google_trends", "file_name": "trends_nl_localidad_2025_2026-10-23.csv", "retrieved_at": "2026-10-23"}, {"source": "statcounter", "file_name": "statcounter_mx_vendors_2026-10-23.csv", "retrieved_at": "2026-10-23"}]};
+
+const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+const SEQ = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];
+const MID = dark ? "#383835" : "#f0efec";
+const DIV_POS = [MID, "#86b6ef", "#3987e5", "#1c5cab", "#104281"];   // iPhone ganó
+const DIV_NEG = [MID, "#f2a3a2", "#e34948", "#b83534", "#8a2423"];   // Galaxy ganó
+const fmt = (v, d = 1) => v == null ? "—" : v.toLocaleString("es-MX",
+  { minimumFractionDigits: d, maximumFractionDigits: d });
+
+function hex(c) { return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); }
+function ramp(stops, t) {
+  t = Math.max(0, Math.min(1, t));
+  const x = t * (stops.length - 1), i = Math.min(Math.floor(x), stops.length - 2);
+  const a = hex(stops[i]), b = hex(stops[i + 1]), f = x - i;
+  return "rgb(" + a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",") + ")";
+}
+
+const locs = DATA.localidades;
+const shares = locs.flatMap(l => [l.s2020, l.s2025]).filter(v => v != null);
+// Mismo dominio para 2020 y 2025: el color de un valor no cambia de año a año
+const lo = Math.floor(Math.min(...shares)), hi = Math.ceil(Math.max(...shares));
+const dMax = Math.max(1, ...locs.map(l => Math.abs(l.delta ?? 0)));
+const pobMax = Math.max(...locs.map(l => l.pob || 0));
+const radius = p => 6 + 22 * Math.sqrt((p || 0) / pobMax);
+
+function color(view, l) {
+  if (view === "delta") {
+    return l.delta >= 0 ? ramp(DIV_POS, l.delta / dMax) : ramp(DIV_NEG, -l.delta / dMax);
+  }
+  return ramp(SEQ, (l["s" + view] - lo) / (hi - lo));
+}
+
+// --- resumen ---
+const r = DATA.resumen;
+const statsHtml = [
+  ["2020", r["2020"] != null ? fmt(r["2020"]) + "%" : "—", "iPhone, ZM (ponderado por población)"],
+  ["2025", r["2025"] != null ? fmt(r["2025"]) + "%" : "—", "iPhone, ZM (ponderado por población)"],
+  ["Cambio", r["2020"] != null && r["2025"] != null
+      ? (r["2025"] - r["2020"] >= 0 ? "+" : "") + fmt(r["2025"] - r["2020"]) + " pp" : "—",
+   "diferencia entre ambos promedios"],
+  ["Localidades", locs.length, "con dato y coordenadas"],
+];
+document.getElementById("stats").innerHTML = statsHtml.map(([t, v, s]) =>
+  `<div class="stat"><span>${t}</span><b>${v}</b><span>${s}</span></div>`).join("");
+
+// --- mapa ---
+const map = L.map("map", { scrollWheelZoom: false }).setView([25.69, -100.31], 11);
+// Mapa base: satélite (Esri World Imagery) o gris (Esri Canvas), ninguno requiere API key
+const canvas = dark ? "World_Dark_Gray_Base" : "World_Light_Gray_Base";
+const grayTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/"
+  + canvas + "/MapServer/tile/{z}/{y}/{x}", {
+  attribution: "Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors",
+  maxZoom: 16 });
+const satTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/"
+  + "World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+  attribution: "Imágenes &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics",
+  maxZoom: 18 });
+// Rótulos (nombres de municipios/ciudades) sobre la imagen satelital
+const labelTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/"
+  + "Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18 });
+let curView = "2025", baseName = null, baseLayer = null, labelLayer = null;
+
+function setBase(name) {
+  if (name === baseName) return;
+  baseName = name;
+  if (baseLayer) baseLayer.remove();
+  if (labelLayer) { labelLayer.remove(); labelLayer = null; }
+  if (name === "sat") { baseLayer = satTiles; labelLayer = labelTiles; }
+  else { baseLayer = grayTiles; }
+  baseLayer.addTo(map);
+  if (labelLayer) labelLayer.addTo(map);
+  document.querySelectorAll("[data-base]").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.base === name));
+    Object.assign(b.style, b.getAttribute("aria-pressed") === "true"
+      ? { background: "#4a79e8", color: "#fff" } : { background: dark ? "#33332f" : "#fff", color: dark ? "#ddd" : "#222" });
+  });
+  if (baseLayer === grayTiles) map.setMaxZoom(16); else map.setMaxZoom(18);
+  draw(curView);
+}
+
+const BaseCtl = L.Control.extend({
+  options: { position: "topright" },
+  onAdd() {
+    const d = L.DomUtil.create("div", "basectl");
+    d.innerHTML = '<button type="button" data-base="sat">Satelital</button>'
+      + '<button type="button" data-base="gray">Gris</button>';
+    d.querySelectorAll("button").forEach(b => {
+      Object.assign(b.style, { border: "0", cursor: "pointer", padding: "4px 10px",
+        "border-radius": "6px", font: "12px system-ui, sans-serif" });
+      L.DomEvent.on(b, "click", e => { L.DomEvent.stop(e); setBase(b.dataset.base); });
+      L.DomEvent.disableClickPropagation(b);
+    });
+    return d;
+  }
+});
+new BaseCtl().addTo(map);
+// Encuadrar cuando el contenedor ya tiene tamaño: si la página carga en una
+// pestaña oculta mide 0 px y Leaflet se iría al zoom máximo
+let fitted = false;
+const mapEl = document.getElementById("map");
+new ResizeObserver(() => {
+  if (fitted || !locs.length || mapEl.clientWidth === 0) return;
+  map.invalidateSize();
+  map.fitBounds(locs.map(l => [l.lat, l.lon]), { padding: [30, 30], maxZoom: 13 });
+  fitted = true;
+}).observe(mapEl);
+const layer = L.layerGroup().addTo(map);
+
+function tooltip(l) {
+  const row = (k, v) => `<br>${k}: <b>${v}</b>`;
+  return `<div class="tt"><b>${l.nom_loc}</b><br><span>${l.nom_mun}</span>` +
+    row("2020", l.s2020 == null ? "sin dato"
+      : `iPhone <b>${fmt(l.s2020)}%</b> · Galaxy <b>${fmt(100 - l.s2020)}%</b>`) +
+    row("2025", l.s2025 == null ? "sin dato"
+      : `iPhone <b>${fmt(l.s2025)}%</b> · Galaxy <b>${fmt(100 - l.s2025)}%</b>`) +
+    (l.delta == null ? "" : row("Cambio", (l.delta >= 0 ? "+" : "") + fmt(l.delta) + " pp")) +
+    row("Población", (l.pob ?? 0).toLocaleString("es-MX")) +
+    row("Viviendas con internet", fmt(l.internet) + "%") + "</div>";
+}
+
+function draw(view) {
+  curView = view;
+  layer.clearLayers();
+  const key = view === "delta" ? "delta" : "s" + view;
+  // Las grandes primero para que las chicas queden encima y se puedan señalar
+  const shown = locs.filter(l => l[key] != null).sort((a, b) => (b.pob || 0) - (a.pob || 0));
+  for (const l of shown) {
+    L.circleMarker([l.lat, l.lon], {
+      radius: radius(l.pob), color: dark ? "#1a1a19" : "#ffffff", weight: 2,
+      fillColor: color(view, l), fillOpacity: 0.9,
+    }).bindTooltip(tooltip(l), { sticky: true }).addTo(layer);
+  }
+  document.querySelectorAll(".seg button").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+
+  const lg = document.getElementById("legend");
+  if (view === "delta") {
+    const g = [...DIV_NEG].reverse().concat(DIV_POS.slice(1));
+    lg.innerHTML = `<span>Galaxy ganó −${fmt(dMax)}</span>` +
+      `<span class="bar" style="background:linear-gradient(90deg,${g.join(",")})"></span>` +
+      `<span>+${fmt(dMax)} iPhone ganó</span>`;
+  } else {
+    lg.innerHTML = `<span>${lo}%</span><span class="bar" style="background:linear-gradient(90deg,${SEQ.join(",")})"></span><span>${hi}% iPhone</span>`;
+  }
+  const missing = locs.length - shown.length;
+  document.getElementById("note").textContent =
+    `${shown.length} localidades en esta vista` +
+    (missing ? `; ${missing} sólo tienen dato en uno de los dos años.` : ".") +
+    (view === "delta" ? "" : ` Escala de ${lo}% a ${hi}%, igual para ambos años.`);
+}
+document.querySelectorAll(".seg button").forEach(b =>
+  b.addEventListener("click", () => draw(b.dataset.view)));
+draw("2025");
+
+// Base satelital por defecto (necesita `layer`, ya declarado arriba)
+setBase("sat");
+
+// --- tabla ---
+const rows = [...locs].sort((a, b) => (b.delta ?? -1e9) - (a.delta ?? -1e9));
+document.getElementById("tabla").innerHTML =
+  `<thead><tr><th>Localidad</th><th>Municipio</th><th class="n">iPhone 2020</th>` +
+  `<th class="n">iPhone 2025</th><th class="n">Cambio (pp)</th><th class="n">Población</th></tr></thead><tbody>` +
+  rows.map(l => `<tr><td>${l.nom_loc}</td><td>${l.nom_mun}</td>` +
+    `<td class="n">${fmt(l.s2020)}</td><td class="n">${fmt(l.s2025)}</td>` +
+    `<td class="n">${l.delta == null ? "—" : (l.delta >= 0 ? "+" : "") + fmt(l.delta)}</td>` +
+    `<td class="n">${(l.pob ?? 0).toLocaleString("es-MX")}</td></tr>`).join("") + "</tbody>";
+
+document.getElementById("fuentes").textContent = "Fuentes: " +
+  DATA.fuentes.map(f => `${f.file_name} (captura ${f.retrieved_at})`).join(" · ");
+</script>
+</body>
+</html>

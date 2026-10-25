@@ -32,9 +32,7 @@ code { font-family: Consolas, monospace; font-size: 0.95em; background: #f0f3f7;
 <p>Miguel Villarreal · Finance operations → automation · Python · SQL · LLMs · .NET · México</p>
 <p>Repository: github.com/MVillarreal98/fde-portfolio</p>
 <h2>What this is</h2>
-<p>Four demos on billing and payment problems, with synthetic data. A sibling
-repo, [iphone-vs-galaxy-monterrey](https://github.com/MVillarreal98/iphone-vs-galaxy-monterrey),
-analyzes public data (Google Trends, INEGI 2020 Census, StatCounter). No project
+<p>Four demos on billing and payment problems, with synthetic data. No project
 has users or a production deployment, and no figure below measures business impact:
 they are test counts and measurements; each README gives command, machine and versions.</p>
 <h2>Projects: problem → root cause → solution → evidence</h2>
@@ -71,12 +69,6 @@ they are test counts and measurements; each README gives command, machine and ve
 <td>Each open invoice must age from its due date and get the right notice. Loose parsing, cash applied out of order and duplicated export ids hide what is owed.</td>
 <td>Staging demands an integer-literal amount and casts with <code>TRY_CAST</code> into a rejected-rows file, rejects repeated invoice or payment ids after their first occurrence, applies cash FIFO capped per invoice, due-date buckets, escalating dunning stages, duplicate-payment pairs, and three conservation identities (rows, invoice cents, every payment cent in exactly one bucket).</td>
 <td>37 tests, golden tests on all seven output files. In CI: ruff, mypy, 85% branch-coverage gate, byte-for-byte output check, exit 2 on findings.</td>
-</tr>
-<tr>
-<td>iPhone vs Galaxy in Monterrey (SQLite, Python stdlib, Leaflet; public data)</td>
-<td>Phone-preference claims by locality come without sources. Trends gives names with no keys, so a silent Census mismatch corrupts the map.</td>
-<td>Name match to the Census plus a documented overrides file; each raw file recorded in <code>meta</code> with URL and capture date; population-weighted SQL; map.</td>
-<td>In the sibling repo: sanity queries return zero rows on the current build; CI rebuilds the base, runs them and regenerates the map; the map publishes on GitHub Pages. Measures search interest, not users.</td>
 </tr>
 </tbody>
 </table>

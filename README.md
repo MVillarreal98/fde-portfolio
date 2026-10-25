@@ -9,15 +9,10 @@ Four self-contained projects built around problems that come up in billing and
 payment operations: two money records that should agree and do not, free-text
 customer claims that need a decision that follows policy, files that must
 match a rigid layout down to the character, and a collections sheet where
-every open invoice must age and escalate on schedule. A fifth project goes
-outside that job: it maps, locality by locality, where in the Monterrey metro
-people search iPhone over Samsung Galaxy and how that moved from 2020 to 2025,
-crossing three public data sources.
+every open invoice must age and escalate on schedule.
 
-> **Status, plainly.** These are portfolio demos. Every dataset is synthetic
-> and was written for the demos; the sibling [iPhone vs Galaxy repo](https://github.com/MVillarreal98/iphone-vs-galaxy-monterrey)
-> is the exception and uses public data (Google Trends, the 2020 Census from
-> INEGI, StatCounter) downloaded on the dates named in its README. No project has users
+> **Status, plainly.** These are portfolio demos. Every dataset in this
+> repository is synthetic and was written for the demos. No project has users
 > or a production deployment, and nothing here measures business impact. The
 > numbers below are test counts and measurements on synthetic data; each
 > project README gives the command, machine and versions behind them.
@@ -30,8 +25,6 @@ crossing three public data sources.
 | **[LLM Support Desk](projects/llm-support-desk/)** | Python (stdlib) · Ollama `llama3.2:1b` · SQLite · Docker | Triages payment claims. A local LLM proposes a category and severity; deterministic rules decide the action and can only escalate. Every decision is stored in SQLite with the prompt hash, the model and the rules that fired. | 133 pytest tests with 99% line and branch coverage, including prompt-injection tests against a fake model that obeys the injection. Offline eval on 23 labeled synthetic tickets: category agreement 13/23 for `llama3.2:1b` and 21/23 for the keyword fallback; 9 of the 10 tickets that must reach a human were escalated on the LLM path. |
 | **[Document Layout Automator](projects/file-layout-automator/)** | C# · .NET 8 · WPF + console CLI | Turns CSV rows into fixed-width layout files. It rejects a value instead of truncating it, reports line, field and reason, and writes nothing while any row fails. The desktop app and the CLI share one runner. | 38 xunit tests, including golden tests that compare the committed `sample_output/` with the engine's output. `dotnet build -warnaserror` passes with 0 warnings. |
 | **[Collections Aging SQL](projects/collections-aging-sql/)** | DuckDB SQL · thin Python harness | Ages every open invoice from the policy due date, assigns one escalating dunning stage, applies cash FIFO so surplus is unapplied and cannot read as money owed, and lists duplicate-payment candidate pairs. Unusable rows land in `rejected_rows.csv` with a reason, and the run stops if invoiced ≠ applied + outstanding. | 37 pytest tests, including golden tests that diff all seven committed output files against a fresh run (LF everywhere: the report matches on Windows too). Amount text that is not an integer literal is rejected, duplicated invoice or payment ids are rejected after their first occurrence, and conservation holds three identities: rows, invoice cents and every payment cent landing in exactly one bucket. Ruff, mypy and an 85% branch-coverage gate pass; the installed CLI reproduces `sample_output/` byte for byte. |
-| **[iPhone vs Galaxy in Monterrey](https://github.com/MVillarreal98/iphone-vs-galaxy-monterrey)** — sibling repo | SQLite · Python (stdlib) · Leaflet | Maps where the Monterrey metro searches iPhone over Samsung Galaxy, locality by locality, in 2020 vs 2025: Google Trends matched to the INEGI 2020 Census, with StatCounter as the national-usage context. | In its own repo: CI rebuilds the base from the committed raw files (traceable in `meta`), the sanity queries must return zero rows, the map-precedence match is unit-tested, and the map publishes to [GitHub Pages](https://mvillarreal98.github.io/iphone-vs-galaxy-monterrey/). |
-
 ## Problem → root cause → solution → how it would be measured
 
 ### Reconciliation Engine
@@ -128,32 +121,6 @@ crossing three public data sources.
   file arrival to a distributed call sheet. None of these has been measured,
   because there is no real data here.
 
-### iPhone vs Samsung Galaxy in Monterrey
-
-- **Problem.** Locality-level claims about "where people prefer iPhone" are
-  usually made with no sources: either anecdote or a screenshot of a hashtag.
-  There is no public data of phone usage per city.
-- **Root causes it is built around.** Trends gives locality names with no keys
-  or coordinates (requiring a documented match to the Census so no locality is
-  silently wrong), a theme search for "Samsung" would count TVs and
-  microwaves (so the project uses topics, not keywords), and two separate
-  Trends downloads are not comparable unless the share is read *within* each
-  locality (that is what the schema forces).
-- **Solution.** One SQLite base from three sources, each file recorded in
-  `meta` with URL and capture date; SQL that reports the share per locality
-  (weighting by Census population), the 2020→2025 change and the gap between
-  metro search and national web traffic (in 2025, iPhone takes 87% of
-  iPhone + Galaxy searches in the metro, while Apple takes ~39% of Apple +
-  Samsung web traffic nationally and ~16% of all mobile web traffic, per
-  StatCounter); sanity queries that
-  turn every matching problem into named rows rather than silent loss; and an
-  interactive satellite map. Python is stdlib-only: the base rebuilds without
-  a single install.
-- **How it would be measured.** On a real contract: the match rate
-  Trends↔Census, coverage of metro population, and whether the interpolated
-  map correlates with survey data. In the repo, the quality gates are the
-  sanity checks returning zero rows and the CI job rebuilding it all clean.
-
 ## SQL in this repository
 
 - **DuckDB** ([`projects/collections-aging-sql/src/aging_sql/sql/`](projects/collections-aging-sql/src/aging_sql/sql/)):
@@ -177,17 +144,6 @@ crossing three public data sources.
   the `decisions` table (the decision log) and `METRICS_SQL`: escalation,
   override and fallback rates, latency per source, and rules fired, counted with
   `json_each`.
-- **SQLite** ([`iphone-vs-galaxy-monterrey/sql/`](https://github.com/MVillarreal98/iphone-vs-galaxy-monterrey/tree/main/sql),
-  sibling repo):
-  base views carry the stable columns (`v_localidad` attaches coordinates,
-  population and socioeconomic indicators to every Trends share;
-  `v_localidad_cambio` reformats the two years into rows). On top of them:
-  population-weighted shares with quartile ranks per year (Q1), each locality
-  against the metro average in its own year, dispersion (Q5), the 2020→2025
-  change, and pure-SQL Pearson correlations (Q4) between the iPhone share and
-  three census indicators — no pandas in the analysis path.
-  `05_contexto_nacional.sql` left-joins the metro search share with
-  StatCounter usage per year and reports the gap in pp.
 
 ## Repository-wide checks
 
@@ -253,9 +209,6 @@ on Windows. Run each block from the repository root; the subshells keep the
 
 # Collections Aging SQL
 (cd projects/collections-aging-sql && pip install -e ".[dev]" && pytest && python run_collections_aging.py)
-
-# iPhone vs Galaxy in Monterrey — public data, now lives in its own repo:
-# https://github.com/MVillarreal98/iphone-vs-galaxy-monterrey
 ```
 
 You can review each project without building it. The reconciliation,
@@ -274,20 +227,4 @@ docs/executive-summary.md         one-page summary (docs/build_summary.py genera
 .github/workflows/                CI and Docker workflows
 ```
 
-## License and data sources
-
-The code and the synthetic datasets are MIT licensed (see [LICENSE](LICENSE)).
-The sibling repo [iphone-vs-galaxy-monterrey](https://github.com/MVillarreal98/iphone-vs-galaxy-monterrey)
-commits public raw files under its own licensing section; those data sources
-keep their terms:
-
-- INEGI, Censo de Población y Vivienda 2020 (ITER), used under the
-  "Términos de Libre Uso de la Información del INEGI". Source: INEGI.
-- StatCounter Global Stats, mobile vendor market share in Mexico, licensed
-  under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
-  Source: Statcounter Global Stats.
-- Google Trends exports (topics *iPhone* and *Samsung Galaxy*, Nuevo León).
-  Data source: Google Trends (https://www.google.com/trends).
-
-The map's base tiles are credited on the map itself (Esri and its data
-partners, including OpenStreetMap contributors).
+MIT licensed (see [LICENSE](LICENSE)).
